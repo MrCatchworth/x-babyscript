@@ -1,0 +1,10 @@
+{
+    "antlr4.generation": {
+        "mode": "external",
+        "language": "CSharp",
+        "listeners": true,
+        "visitors": true,
+        "package": "XRebirthBabyScript.Compile",
+        "outputDir": "./Compile"
+    }
+}

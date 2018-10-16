@@ -1,0 +1,1015 @@
+mdscript(name:GM_Assassination, xmlnsxsi:"http://www.w3.org/2001/XMLSchema-instance", xsinoNamespaceSchemaLocation:md.xsd)
+{
+    cues
+    {
+
+        /*Generic Mission: Assassination
+    missiontype.kill
+    
+    Mission Variation #1: Mass Traffic Criminal
+      Licence: None
+      Mission Level: 2
+      Enemy Faction: Smuggler, Criminal
+      */
+
+        cue(Force_Generic, instantiate:true)
+        {
+            conditions
+            {
+                event_cue_signalled;
+            }
+            actions
+            {
+                signal_cue(md.GenericMissions.RemoveAllOffers);
+            }
+            force(name:GM_Assassination);
+            cues
+            {
+                cue(Force_Generic_Signals)
+                {
+                    delay(exact:1s);
+                    actions
+                    {
+                        do_all(exact:25)
+                        {
+                            signal_cue_instantly(md.GM_Assassination.StartGeneric, param:100);
+                        }
+                    }
+                }
+            }
+        }
+
+        cue(StartGeneric, instantiate:true, namespace:this)
+        {
+            conditions
+            {
+                check_any
+                {
+                    check_all
+                    {
+                        //Generic Mission Case (If this cue is to be signalled by other sources, add a parameter to differentiate)
+                        //signal_cue_instantly - event.param = $DebugChance 0 to 100
+                        event_cue_signalled;
+                        check_value(player.sector);
+                        count_stations(space:player.sector, min:1, canhaveofferlocation:tag.mission, hasmasstraffic:true, result:$missionstations)
+                        {
+                            match_relation(faction:faction.player, comparison:"not", relation:enemy);
+                            match(owner:faction.player, negate:true);
+                            match(owner:null, negate:true);
+                            match_distance(object:player.primaryship, max:md.$MaxMissionOfferDistance);
+                        }
+                    }
+
+                    check_all
+                    {
+                        event_player_mission_opportunity;
+                        check_value(false);
+                        //TODO: Filter what opportunities trigger this mission
+                    }
+                }
+            }
+            actions
+            {
+                //***event_cue_signalled case***
+                if(event.name == 'event_cue_signalled')
+                {
+                    $missionstation = static.$missionstations.{md.$RandomIdx};
+                    $EventOffer = false;
+
+                    $DebugChance = @event.param;
+                }
+
+                elseif(event.name == 'event_player_mission_opportunity')
+                {
+                    $missionstation = event.param;
+                    $EventOffer = true;
+
+                    $DebugChance = 0;
+                }
+            }
+            cues
+            {
+                cue(StartRef, ref:md.GM_Assassination.Start)
+                {
+                    param(MissionStation, $missionstation);
+                    param(EventOffer, $EventOffer);
+
+                    param(DebugChance, $DebugChance);
+                }
+            }
+        }
+
+        /*
+    The Start Cue will create an offer on a station
+    If the offer is accepted, the mission library (ProtectObject) is called
+    $Feedback:
+    -105: No suitable mission variant
+    -104: Unknown mission variant. No TextOffset set
+    -103: No target found
+    -102: TargetStation does not have masstraffic
+    -101: No MissionStation parameter provided
+    -100: Undefined failure. Defaulted to -100
+    -6: Mission timeout
+    -5: Event Offer timeout
+    -4: Player declined Event Offer
+    -3: Offer removed
+    -2: Mission aborted
+    -1: Mission failed
+    1: Mission suceeded */
+        library(Start)
+        {
+            params
+            {
+                param(MissionStation);
+                param(Client_Owner, default:null); //Default to $MissionStation owner. Used for reward calculation or creation of $Client
+
+                param(RewardCr, default:null);
+                param(RewardNotoriety, default:null);
+                param(MissionDuration, default:null);
+
+                param(WithoutOffer, default:false);
+                param(EventOffer, default:false); //Is the mission offered directly to the player with an interactive event
+
+                // masstraffic target at a given station, not the station itself 
+                param(TargetStation, default:null);
+                param(TargetShip, default:null);
+
+                //Mission text / variant overrides
+                param(Page, default:30102); //Allows a different text page to be used instead of the generic one. Text IDs must be mapped similarly.
+                param(TextOffset, default:null); //The text offset for this variant's text on the page
+                param(MissionVariant, default:null); //set a specific variant of the generic mission.                If a page and textoffset parameters were set, this override will only change the mission rules and setup
+                param(OverrideName, default:null); //Override the title of the mission briefing
+                param(OverrideDescription, default:null); //Override the description of the mission briefing
+
+                param(ReportSignalCue, default:null);
+                param(DebugChance, default:0);
+            }
+            actions
+            {
+                $Feedback = 0;
+                if(not $MissionStation.exists)
+                {
+                    $Feedback = -101;
+                }
+            }
+            cues
+            {
+                cue(Do_Not_Start_Mission, onfail:cancel)
+                {
+                    conditions
+                    {
+                        check_value($Feedback, exact:0, negate:true);
+                    }
+                    actions
+                    {
+                        signal_cue(CleanUp);
+                    }
+                }
+
+                /*
+        Mission Variation #1: Mass Traffic Criminal
+          Licence: None
+          Mission Level: 2
+          Enemy Faction: Smuggler, Criminal*/
+
+                //event.param = [$SetupVariation(bool)]
+                //This cue requires several variables to be set such as $Client_Owner
+                //Result saved to: $VariationResult = true/false
+                cue(Check_Variation_1, instantiate:true)
+                {
+                    conditions
+                    {
+                        event_cue_signalled;
+                    }
+                    actions
+                    {
+                        this.$SetupVariation = event.param.{1};
+
+                        $VariationResult = false;
+                        create_list($PossibleFactions);
+                        this.$FactionExists = false;
+                        //Loop through several times until at least one faction is added to the list, then break
+                        do_all(exact:100)
+                        {
+                            if($Get_Mission_Factions_Result.indexof.{faction.criminal})
+                            {
+                                this.$FactionExists = true;
+                                append_to_list($PossibleFactions, faction.criminal, chance:30);
+                            }
+                            if($Get_Mission_Factions_Result.indexof.{faction.smuggler})
+                            {
+                                this.$FactionExists = true;
+                                append_to_list($PossibleFactions, faction.smuggler, chance:70);
+                            }
+
+                            //No factions can be added. Just break and fail
+                            if(not this.$FactionExists)
+                            {
+                                break;
+                            }
+                            //Success case
+                            elseif($PossibleFactions.count, min:1)
+                            {
+                                $VariationResult = true;
+                                break;
+                            }
+                        }
+
+                        if($VariationResult and this.$SetupVariation)
+                        {
+                            //Set mission variables to namespace
+                            $TextOffset = 100;
+                            $MissionLevel = 2;
+                            $TargetNPC__Faction = $PossibleFactions.random;
+
+                            if($TargetNPC__Faction, exact:faction.smuggler)
+                            {
+                                do_any
+                                {
+                                    set($Difficulty, exact:level.veryeasy, weight:10);
+                                    set($Difficulty, exact:level.easy, weight:25);
+                                    set($Difficulty, exact:level.medium, weight:30);
+                                }
+                            }
+                            elseif($TargetNPC__Faction, exact:faction.criminal)
+                            {
+                                do_any
+                                {
+                                    set($Difficulty, exact:level.medium, weight:30);
+                                    set($Difficulty, exact:level.hard, weight:25);
+                                    set($Difficulty, exact:level.veryhard, weight:10);
+                                }
+                            }
+                            else
+                            {
+                                //Shouldn't really get into this case
+                                set($Difficulty, exact:level.medium, weight:30);
+                            }
+                        }
+                    }
+                }
+
+                cue(Do_Start_Mission, onfail:cancel)
+                {
+                    conditions
+                    {
+                        check_value($Feedback, exact:0);
+                    }
+                    actions
+                    {
+                        $Client_Owner = $MissionStation.owner;
+
+                        signal_cue_instantly(md.LIB_Factions.Get_Mission_Factions, param:[Start, $MissionStation.cluster]);
+                        if($Get_Mission_Factions_Result.indexof.{$Client_Owner})
+                        {
+                            rem($Get_Mission_Factions_Result.{$Get_Mission_Factions_Result.indexof.{$Client_Owner}});
+                        }
+
+                        if($TargetStation == null)
+                        {
+                            $TargetStation = $MissionStation;
+                        }
+
+                        if(not $TargetStation.hasmasstraffic)
+                        {
+                            $Feedback = -102;
+                        }
+
+                        if($Feedback, exact:0)
+                        {
+
+                            //If $MissionVariant was passed as a parameter, check that it is possible
+                            if($MissionVariant)
+                            {
+                                if($MissionVariant, min:1)
+                                {
+                                    if($MissionVariant == 1)
+                                    {
+                                        signal_cue_instantly(Check_Variation_1, param:[false]);
+                                    }
+
+                                    if(not $VariationResult)
+                                    {
+                                        debug_text('Mission can not spawn variant ' + $MissionVariant, chance:$DebugChance);
+                                        $MissionVariant = 0;
+                                    }
+                                }
+                            }
+
+                            else
+                            {
+                                create_list($PossibleVariants);
+                                //Mission Variant 1 - Mass Traffic Criminal
+                                signal_cue_instantly(Check_Variation_1, param:[false]);
+                                if($VariationResult)
+                                {
+                                    append_to_list($PossibleVariants, 1);
+                                }
+                                $VariationResult = null;
+
+                                debug_text('Possible Variants: ' + $PossibleVariants, chance:$DebugChance);
+
+                                if($PossibleVariants.count, min:1)
+                                {
+                                    set($MissionVariant, list:$PossibleVariants);
+                                }
+                            }
+
+                            if($MissionVariant)
+                            {
+
+                                //Mission Variant 1 - Mass Traffic Criminal
+                                if($MissionVariant, exact:1)
+                                {
+                                    signal_cue_instantly(Check_Variation_1, param:[true]);
+                                }
+
+                                if(not $TextOffset)
+                                {
+                                    $Feedback = -104;
+                                }
+                            }
+                            else
+                            {
+                                $Feedback = -105;
+                            }
+                        }
+
+                        rem($Get_Mission_Factions_Result);
+
+                        if($Feedback, exact:0)
+                        {
+
+                            create_cue_actor(cue:Start, name:$Client)
+                            {
+                                select(faction:$Client_Owner);
+                                owner(exact:$Client_Owner);
+                            }
+
+                            create_cue_actor(cue:Start, name:$TargetActor)
+                            {
+                                select(faction:$TargetNPC__Faction);
+                                owner(exact:$TargetNPC__Faction);
+                            }
+                            //Stupid hack as the above does not work
+                            set_owner(object:$TargetActor, faction:$TargetNPC__Faction);
+                            create_group($TargetActors);
+
+                            if($OverrideName)
+                            {
+                                $MissionName = $OverrideName;
+                            }
+                            else
+                            {
+                                $MissionName = readtext.{$Page}.{$TextOffset + 1};
+                            }
+
+                            if($OverrideDescription)
+                            {
+                                $Description = $OverrideDescription;
+                            }
+                            else
+                            {
+                                $Description = readtext.{$Page}.{$TextOffset + 2};
+                            }
+
+                            if($Client_Owner)
+                            {
+                                if(not $RewardCr)
+                                {
+                                    signal_cue_instantly(md.LIB_Reward_Balancing.Reward_Money, param:[Start, $Difficulty, $MissionLevel, $Client_Owner]);
+                                    $RewardCr = $Reward_Money__Result;
+                                }
+
+                                if(not $RewardNotoriety)
+                                {
+                                    signal_cue_instantly(md.LIB_Reward_Balancing.Reward_Notoriety, param:[Start, $Difficulty, $MissionLevel, $Client_Owner]);
+                                    $RewardNotoriety = $Reward_Notoriety__Result;
+                                }
+                            }
+
+                            $TargetShip = null;
+                        }
+                        else
+                        {
+                            signal_cue(CleanUp);
+                            cancel_cue(Do_Start_Mission);
+                        }
+                    }
+
+                    cues
+                    {
+                        cue(With_Offer, onfail:cancel)
+                        {
+                            conditions
+                            {
+                                check_value($WithoutOffer, exact:false);
+                            }
+                            cues
+                            {
+                                cue(MissionLocationOffer, onfail:cancel)
+                                {
+                                    conditions
+                                    {
+                                        check_value(not $EventOffer);
+                                    }
+                                    cues
+                                    {
+                                        //Two library calls to set up a mission offer and handle the resulting conversation
+                                        cue(CreateOffer, ref:md.GenericMissions.OfferInSpace)
+                                        {
+                                            param(BaseCue, Start);
+                                            param(CleanupCue, OfferRemoved);
+                                            param(Station, $MissionStation);
+                                            param(Client, $Client);
+                                            param(MissionName, $MissionName);
+                                            param(Description, $Description);
+                                            param(Reward, $RewardCr);
+                                            param(MissionDuration, $MissionDuration);
+                                            param(Difficulty, $Difficulty);
+                                            param(TimeoutMin, 8min);
+                                            param(TimeoutMax, 12min);
+                                            param(Faction, $Client_Owner);
+                                            param(MissionType, missiontype.kill);
+                                            param(AcceptCue, MissionAccepted);
+                                            param(CompleteCue, AddOfferSteps);
+                                        }
+
+                                        //Cue which will be signalled if offer is removed or timeout reached
+                                        cue(OfferRemoved)
+                                        {
+                                            conditions
+                                            {
+                                                event_cue_signalled;
+                                            }
+                                            actions
+                                            {
+                                                $Feedback = -3;
+                                                signal_cue(CleanUp);
+                                            }
+                                        }
+                                    }
+                                }
+
+                                cue(EventOffer, onfail:cancel)
+                                {
+                                    conditions
+                                    {
+                                        check_value($EventOffer);
+                                    }
+                                    actions
+                                    {
+                                        $Event_Timeout = md.$InteractiveMissionOfferTimeout;
+                                        play_cutscene(key:'ShowPilot', eventmonitor:true, timeout:$Event_Timeout)
+                                        {
+                                            interaction(text:$MissionName, param:$Client, param2:'GM_Assassination__Offer');
+                                            param(npcref, object:$Client);
+                                        }
+                                    }
+                                    cues
+                                    {
+                                        cue(EventOffer_Wait)
+                                        {
+                                            delay(exact:50ms);
+                                            actions
+                                            {
+                                                //TODO: Better line
+                                                speak($Client, 1);
+                                            }
+                                        }
+
+                                        cue(EventOffer_Interact)
+                                        {
+                                            conditions
+                                            {
+                                                event_player_interaction(param:$Client, param2:'GM_Assassination__Offer');
+                                            }
+                                            actions
+                                            {
+                                                stop_cutscene(key:'ShowPilot');
+                                                cancel_cue(EventOffer_Timeout);
+                                                start_conversation(actor:$Client, conversation:assassinate);
+                                                create_offer(cue:Start, name:$MissionName, description:$Description, difficulty:$Difficulty, actor:$Client, faction:$Client_Owner, duration:$MissionDuration, type:$MissionType, reward:$RewardCr);
+                                                signal_cue(AddOfferSteps);
+                                            }
+                                        }
+
+                                        cue(EventOffer_Timeout)
+                                        {
+                                            delay(exact:$Event_Timeout);
+                                            actions
+                                            {
+                                                $Feedback = -5;
+                                                signal_cue(CleanUp);
+                                            }
+                                        }
+                                    }
+                                }
+
+                                cue(AddOfferSteps)
+                                {
+                                    conditions
+                                    {
+                                        event_cue_signalled;
+                                    }
+                                    actions
+                                    {
+                                        update_offer(cue:Start)
+                                        {
+                                            briefing
+                                            {
+                                                objective(step:1, action:objective.kill, text:$TargetActor.name);
+                                            }
+                                        }
+                                    }
+                                }
+
+                                cue(ShowOffer)
+                                {
+                                    conditions
+                                    {
+                                        event_offer_accepted(cue:Start);
+                                    }
+                                    actions
+                                    {
+                                        start_conversation(conversation:assassinate, actor:$Client);
+                                    }
+                                    cues
+                                    {
+                                        cue(ShowOffer_KeepAlive, checkinterval:1min) //Unfortunate hack where we must stop the ShowOffer cue from being removed
+                                        {
+                                            conditions
+                                            {
+                                                check_value(false);
+                                            }
+                                        }
+                                    }
+                                }
+
+                                cue(ConversationStart, instantiate:true)
+                                {
+                                    conditions
+                                    {
+                                        check_any
+                                        {
+                                            event_conversation_started(actor:$Client);
+                                            event_conversation_returned_to_section(actor:$Client);
+                                        }
+                                    }
+                                    actions
+                                    {
+                                        add_conversation_view(view:facenormal);
+                                        if(event.name, exact:'event_conversation_started')
+                                        {
+                                            add_npc_line(line:3001);
+                                        }
+                                        add_player_choice(text:{1002,14001}, position:top_right, section:assassinate_accept);
+                                        add_player_choice(text:{1002,14002}, position:bottom_right, section:assassinate_decline);
+                                        add_player_choice_sub(text:{1002,14003}, position:left, section:assassinate_moreinfo, choiceparam:[0, 0, Start, true]);
+                                    }
+                                }
+                                cue(ConversationNextSection, instantiate:true)
+                                {
+                                    conditions
+                                    {
+                                        event_conversation_next_section(actor:$Client);
+                                    }
+                                    actions
+                                    {
+                                        if(event.param == 'assassinate_moreinfo')
+                                        {
+                                            //Briefing here
+                                            open_conversation_menu(menu:MissionBriefingMenu, param:event.param2, param2:event.param3);
+                                            add_conversation_view(view:facedetailmonitor);
+                                            add_npc_line(speaker:$Client, line:3037);
+                                            /*<add_npc_line line="3102" />
+                          <add_player_choice text="{1002,14001}" position="top_right" section="assassinate_accept" />
+                          <add_player_choice text="{1002,14002}" position="bottom_right" section="assassinate_decline" />*/
+                                        }
+                                        elseif(event.param == 'assassinate_accept')
+                                        {
+                                            // Prepare stuff for starting the mission 
+                                            include_actions(ref:FindTarget);
+                                            if($TargetActors.count, min:1)
+                                            {
+                                                add_npc_line(line:3031); //NPC Accept line
+                                                signal_cue(MissionAccepted);
+                                            }
+                                            else
+                                            {
+                                                add_npc_line(line:3035); //TODO: Better text with 'Sorry, come back later!' or another reject text
+                                                reset_cue(ShowOffer);
+                                            }
+                                        }
+                                        //Decline and else case
+                                        else
+                                        {
+                                            if($EventOffer)
+                                            {
+                                                //Event Offer conversation ended with no responce
+                                                remove_offer(cue:Start);
+                                                $Feedback = -4;
+                                                signal_cue(CleanUp);
+                                            }
+                                            else
+                                            {
+                                                add_npc_line(line:13); //Whatever.
+                                                // restart Accepted event listener 
+                                                reset_cue(ShowOffer);
+                                            }
+                                        }
+                                    }
+                                }
+                                cue(AfterConversationAccept, instantiate:true)
+                                {
+                                    conditions
+                                    {
+                                        event_conversation_finished(actor:$Client, outcome:assassinate_accept);
+                                    }
+                                    delay(exact:2s);
+                                    actions
+                                    {
+                                        speak(player.copilot, 9); //Do you really trust that guy? I don't!
+                                    }
+                                }
+
+                                cue(EndEventConversation)
+                                {
+                                    conditions
+                                    {
+                                        event_conversation_finished(actor:$Client);
+                                        check_value(event.param, exact:'assassinate_accept', negate:true);
+                                        check_value($EventOffer);
+                                    }
+                                    actions
+                                    {
+                                        //Event Offer conversation ended with no responce
+                                        remove_offer(cue:Start);
+                                        $Feedback = -4;
+                                        signal_cue(CleanUp);
+                                    }
+                                }
+                            }
+                        }
+
+                        cue(Without_Offer, onfail:cancel)
+                        {
+                            conditions
+                            {
+                                check_value($WithoutOffer, exact:true);
+                            }
+                            actions
+                            {
+                                include_actions(ref:FindTarget);
+                                if($TargetActors.count, min:1)
+                                {
+                                    signal_cue(MissionAccepted);
+                                }
+                                else
+                                {
+                                    $Feedback = -103;
+                                    signal_cue(CleanUp);
+                                }
+                            }
+                        }
+
+                        library(FindTarget)
+                        {
+                            actions
+                            {
+                                if($TargetShip == null)
+                                {
+                                    request_mass_traffic_ship(name:$MassTrafficShip, zone:$TargetStation.zone, start:$TargetStation);
+                                    destroy_object(object:$MassTrafficShip.pilot);
+                                    assign_pilot(actor:$TargetActor, object:$MassTrafficShip);
+                                    set_owner(object:$MassTrafficShip, faction:$TargetActor.owner);
+                                    rem($MassTrafficShip);
+                                }
+                                else
+                                {
+                                    $TargetActor = $TargetShip.pilot;
+                                }
+
+                                if($TargetActor.exists)
+                                {
+                                    add_to_group($TargetActors, $TargetActor);
+                                }
+                            }
+                        }
+
+                        cue(BriefingStarted)
+                        {
+                            conditions
+                            {
+                                event_briefing_started(cue:Start);
+                            }
+                            actions
+                            {
+                                if($TargetActors.count, min:1)
+                                {
+                                    //Temp value. This is used to identify if a cutscene for this mission is still playing.
+                                    //TODO: Cutscene IDs, so I can stop only this specific cutscene, not any others which may be playing
+                                    set($BriefingCutsceneStarted);
+
+                                    $CutsceneKey = 'OrbitIndefinitely';
+                                    play_cutscene(key:$CutsceneKey, rendertarget:event.param.{1})
+                                    {
+                                        param(targetobject, object:$TargetActors.{1}.ship);
+                                    }
+                                }
+                                else
+                                {
+                                    if(not $HoloMap?)
+                                    {
+                                        add_holomap(name:$HoloMap, rendertarget:$RenderTarget);
+                                    }
+                                }
+
+                                debug_text('Briefing started', chance:$DebugChance);
+                            }
+                            cues
+                            {
+                                cue(DisplayHolomap, onfail:cancel)
+                                {
+                                    conditions
+                                    {
+                                        check_value($HoloMap?);
+                                    }
+                                    cues
+                                    {
+                                        cue(HolomapRef, ref:md.LIB_HolomapTarget.Start)
+                                        {
+                                            param(EndSignalCue, HolomapEnd);
+
+                                            param(HoloMap, $HoloMap);
+                                            param(Components, [player.primaryship, $TargetStation.zone]);
+                                            param(ShowUnknown, true);
+                                        }
+                                        cue(HolomapEnd)
+                                        {
+                                            conditions
+                                            {
+                                                event_cue_signalled;
+                                            }
+                                            actions
+                                            {
+                                                debug_text('Holomap end');
+                                            }
+                                        }
+                                    }
+                                }
+
+                                cue(BriefingStopped)
+                                {
+                                    conditions
+                                    {
+                                        event_briefing_cancelled(cue:Start);
+                                    }
+                                    actions
+                                    {
+                                        if($BriefingCutsceneStarted?)
+                                        {
+                                            //Temp value. This is used to identify if a cutscene for this mission is still playing.
+                                            rem($BriefingCutsceneStarted);
+                                            stop_cutscene(key:$CutsceneKey);
+                                        }
+
+                                        if($HoloMap?)
+                                        {
+                                            remove_holomap;
+                                            rem($HoloMap);
+                                        }
+
+                                        debug_text('Briefing canceled', chance:$DebugChance);
+                                        reset_cue(BriefingStarted);
+                                    }
+                                }
+                            }
+                        }
+
+                        cue(MissionAccepted)
+                        {
+                            conditions
+                            {
+                                event_cue_signalled;
+                            }
+                            actions
+                            {
+                                debug_text('Mission accepted!', chance:$DebugChance);
+                                set(stat.missions_accepted, operation:add);
+
+                                if($WithoutOffer)
+                                {
+                                    create_mission(cue:Start, name:$MissionName, description:$Description, difficulty:$Difficulty, faction:$Client_Owner, type:missiontype.kill, reward:$RewardCr);
+                                }
+                                else
+                                {
+                                    //Copy data from the offer, then remove it
+                                    create_mission(cue:Start, offercue:Start);
+                                    remove_offer(cue:Start);
+                                    cancel_cue(With_Offer);
+                                }
+
+                                signal_cue_instantly(md.GenericMissions.GenericAcceptLogbookEntry, param:[$MissionName, $Client, $Client_Owner]);
+                            }
+                            cues
+                            {
+                                //Now we have created the objects for the mission, start the mission and pass them as parameters
+                                cue(DestroyEntities_ref, ref:md.RML_Destroy_Entities.DestroyEntities)
+                                {
+                                    param(EndSignalCue, MissionEnded);
+                                    param(MissionCue, Start);
+                                    param(StartStep, 1);
+                                    param(Targets_Param, $TargetActors); //Group to destroy
+                                    param(Objective, objective.kill);
+                                    param(DebugChance, $DebugChance);
+                                }
+
+                                cue(Aborted)
+                                {
+                                    conditions
+                                    {
+                                        event_mission_aborted(cue:Start);
+                                    }
+                                    actions
+                                    {
+                                        signal_cue_instantly(md.GenericMissions.GenericAbortLogbookEntry, param:[$MissionName, $Client]);
+
+                                        $Feedback = -2;
+                                        remove_mission(cue:Start, type:aborted);
+                                        signal_cue(CleanUp);
+                                    }
+                                }
+
+                                cue(MissionTimeout, onfail:cancel)
+                                {
+                                    conditions
+                                    {
+                                        check_value(typeof $MissionDuration == datatype.time);
+                                        check_value($MissionDuration, min:1s);
+                                    }
+                                    delay(exact:$MissionDuration);
+                                    actions
+                                    {
+                                        signal_cue_instantly(md.GenericMissions.GenericTimeoutLogbookEntry, param:[$MissionName, $Client]);
+
+                                        remove_mission(cue:Start, type:failed);
+                                        $Feedback = -6;
+                                        signal_cue_instantly(CleanUp);
+                                    }
+                                }
+
+                                cue(MissionEnded)
+                                {
+                                    conditions
+                                    {
+                                        event_cue_signalled;
+                                    }
+                                    actions
+                                    {
+                                        if(MissionEnded.$EndFeedbackValue, max:-1)
+                                        {
+                                            debug_text('This mission has failed with RML feedback: ' + MissionEnded.$EndFeedbackValue, chance:$DebugChance);
+                                            $Feedback = -1;
+                                            speak($Client, 3046);
+
+                                            signal_cue_instantly(md.GenericMissions.GenericFailLogbookEntry, param:[$MissionName, $Client]);
+
+                                            remove_mission(cue:Start, type:failed);
+                                        }
+                                        else
+                                        {
+                                            debug_text('This mission has successfully finished with RML feedback: ' + MissionEnded.$EndFeedbackValue, chance:$DebugChance);
+                                            if($RewardNotoriety and $Client_Owner)
+                                            {
+                                                debug_text('Relation was: ' + player.entity.relationto.{$Client_Owner}, chance:$DebugChance);
+                                                add_faction_relation(faction:faction.player, otherfaction:$Client_Owner, value:$RewardNotoriety);
+                                                debug_text('Relation is now: ' + player.entity.relationto.{$Client_Owner}, chance:$DebugChance);
+                                            }
+
+                                            reward_player(money:$RewardCr);
+                                            show_notification(caption:{1015,40}.[$RewardCr.formatted.default], icon:achievement_money_up, queued:true, sound:ui_mon_eve_money_up);
+                                            set(stat.missions_completed, operation:add);
+                                            $Feedback = 1;
+                                            speak($Client, 3042);
+
+                                            signal_cue_instantly(md.GenericMissions.GenericCompleteLogbookEntry, param:[$MissionName, $Client, null, $RewardCr]);
+
+                                            remove_mission(cue:Start, type:completed);
+                                        }
+                                        signal_cue(CleanUp);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                cue(CleanUp)
+                {
+                    conditions
+                    {
+                        event_cue_signalled;
+                    }
+                    actions
+                    {
+                        //Temp value. This is used to identify if a cutscene for this mission is still playing.
+                        if($BriefingCutsceneStarted?)
+                        {
+                            rem($BriefingCutsceneStarted);
+                            stop_cutscene(key:$CutsceneKey);
+                        }
+                        if($HoloMap?)
+                        {
+                            remove_holomap;
+                            rem($HoloMap);
+                        }
+
+                        //***Cleanup objects***
+
+                        //No .exists check here as $Client may not be connected to gamegraph
+                        if(@$Client.isclass.npc)
+                        {
+                            destroy_object(object:$Client);
+                        }
+
+                        if(@$TargetActor.ship.pilot.exists)
+                        {
+                            if($TargetActor.ship.pilot == $TargetActor)
+                            {
+                                start_script('masstraffic.return', $TargetActor);
+                            }
+                        }
+
+
+                        //***Evaluate result***
+
+                        do_all(chance:$DebugChance)
+                        {
+                            if($Feedback, exact:-105)
+                            {
+                                debug_text('No suitable mission variant');
+                            }
+                            elseif($Feedback, exact:-104)
+                            {
+                                debug_text('Unknown mission variant. No TextOffset set');
+                            }
+                            elseif($Feedback, exact:-103)
+                            {
+                                debug_text('No target found');
+                            }
+                            elseif($Feedback, exact:-102)
+                            {
+                                debug_text('TargetStation does not have masstraffic');
+                            }
+                            elseif($Feedback, exact:-101)
+                            {
+                                debug_text('No MissionStation parameter provided');
+                            }
+                            elseif($Feedback, exact:-6)
+                            {
+                                debug_text('Mission timeout');
+                            }
+                            elseif($Feedback, exact:-5)
+                            {
+                                debug_text('Event Offer timeout');
+                            }
+                            elseif($Feedback, exact:-4)
+                            {
+                                debug_text('Player declined event offer');
+                            }
+                            elseif($Feedback, exact:-3)
+                            {
+                                //<debug_text text="'Offer removed'"/>
+                            }
+                            elseif($Feedback, exact:-2)
+                            {
+                                debug_text('Mission aborted');
+                            }
+                            elseif($Feedback, exact:-1)
+                            {
+                                debug_text('Mission failed');
+                            }
+                            elseif($Feedback, exact:1)
+                            {
+                                debug_text('Mission suceeded');
+                            }
+                            else
+                            {
+                                debug_text('ERROR: Assassination.Cleanup - unknown Feedback value. Default to -100');
+                                $Feedback = -100;
+                            }
+                        }
+
+                        if($ReportSignalCue != null)
+                        {
+                            $ReportSignalCue.$EndFeedbackValue = $Feedback;
+                            signal_cue($ReportSignalCue);
+                        }
+                        cancel_cue(Start);
+                    }
+                }
+            }
+        }
+    }
+}
