@@ -7,8 +7,9 @@ using Antlr4.Runtime;
 using Antlr4.Runtime.Misc;
 using System.IO;
 using XRebirthBabyScript.Tree;
+using XRebirthBabyScript.Compile;
 
-namespace XRebirthBabyScript.Compile
+namespace XRebirthBabyScript.Decompile
 {
     public class BabyScriptDecompiler : IBabyScriptConverter
     {

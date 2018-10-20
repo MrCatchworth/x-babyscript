@@ -3,6 +3,7 @@ using System;
 using System.IO;
 using System.Linq;
 using XRebirthBabyScript.Compile;
+using XRebirthBabyScript.Decompile;
 
 namespace XRebirthBabyScript
 {
