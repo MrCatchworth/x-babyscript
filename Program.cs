@@ -15,9 +15,9 @@ namespace XRebirthBabyScript
             Options programOptions = null;
 
             args = new[] {
-                "compile",
+                "decompile",
                 "-o", ".",
-                "GM_Assassination.xrbs"
+                "GM_Assassination.xml"
             };
 
             Parser.Default.ParseArguments<Options, CompileOptions, DecompileOptions>(args)
@@ -135,10 +135,18 @@ namespace XRebirthBabyScript
                     logger.LogError(outputPath, $"Failed to open file for writing: {e.Message}");
                     continue;
                 }
-                
+
                 Console.WriteLine($"{inputPath} -> {outputPath}");
 
-                var converter = hasCompileVerb ? new BabyScriptCompiler() : throw new ArgumentException("TODO: add decompilation!");
+                IBabyScriptConverter converter;
+                if (hasCompileVerb)
+                {
+                    converter = new BabyScriptCompiler();
+                }
+                else
+                {
+                    converter = new BabyScriptDecompiler();
+                }
 
                 var success = converter.Convert(conversionProperties);
 
