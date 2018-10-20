@@ -1,0 +1,18 @@
+Comments:
+  ☐ If a line is one element header followed by one slash-comment, compile that comment into a 'comment' attribute
+  ☐ If a comment is somewhere it could be compiled into an XML comment, try to do so
+
+Command Line:
+  ☐ Think of some more options...
+  ☐ Add an option for indent size
+
+Compilation/Syntax:
+  ☐ Support camel <-> snake transformation
+
+Program Features:
+  ☐ Add watcher mechanics
+  ☐ Add 'source folder' mechanics
+
+Refactoring:
+  ☐ Decompiler
+  ☐ Main method
