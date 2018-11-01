@@ -17,6 +17,9 @@ namespace XRebirthBabyScript
         [Option("convertcase", Default = false, HelpText = "Convert between snake_case and camelCase as appropriate.")]
         public bool ConvertCaseStyle { get; set; }
 
+        [Option("indent", Default = 4, HelpText = "The number of spaces in each level of indentation.")]
+        public int Indent { get; set; }
+
         [Value(0, Required = true, HelpText = "One or more input files to convert. If more than one file is specified, the output path must refer to a directory, not a regular file.")]
         public IEnumerable<string> InputPaths { get; set; }
 

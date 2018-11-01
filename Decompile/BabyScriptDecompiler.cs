@@ -19,13 +19,91 @@ namespace XRebirthBabyScript.Decompile
         private string curElementComment;
         private TextWriter writer;
         private XmlReader reader;
-        private static readonly int tabWidth = 4;
         private ConversionProperties _properties;
 
         public BabyScriptDecompiler()
         {
             indentLevel = 0;
             curElementComment = null;
+        }
+
+        public bool Convert(ConversionProperties properties)
+        {
+            _properties = properties;
+            writer = new StreamWriter(_properties.OutputStream);
+            reader = XmlReader.Create(_properties.InputStream);
+            
+            while (reader.Read())
+            {
+                if (reader.NodeType == XmlNodeType.Element)
+                {
+
+                    string shortName = properties.GetShortElementName(reader.Name);
+                    WriteIndent();
+
+                    //write a shorthand assign statement if possible
+                    bool shortcutUsed = TryAssignmentShortcut() || TryIncrementShortcut();
+
+                    //otherwise, write a normal element
+                    if (!shortcutUsed)
+                    {
+                        writer.Write(shortName ?? reader.Name);
+
+                        if (reader.HasAttributes)
+                        {
+                            int attrCount = reader.AttributeCount;
+                            writer.Write("(");
+                            WriteAttributes();
+                            writer.Write(")");
+                        }
+
+                        if (reader.IsEmptyElement)
+                        {
+                            writer.Write(";");
+                        }
+                    }
+
+                    //either way write any comment as necessary
+                    if (curElementComment != null)
+                    {
+                        writer.Write(' ');
+                        WriteComment(curElementComment);
+                        curElementComment = null;
+                    }
+
+                    writer.WriteLine();
+
+                    if (!shortcutUsed && !reader.IsEmptyElement)
+                    {
+                        WriteIndent();
+                        writer.WriteLine("{");
+                        indentLevel++;
+                    }
+                }
+                else if (reader.NodeType == XmlNodeType.EndElement)
+                {
+                    indentLevel--;
+                    WriteIndent();
+                    writer.WriteLine("}");
+                }
+                else if (reader.NodeType == XmlNodeType.Comment)
+                {
+                    WriteIndent();
+                    WriteComment(reader.Value);
+                    writer.WriteLine();
+                }
+                else if (reader.NodeType == XmlNodeType.Text || reader.NodeType == XmlNodeType.Whitespace)
+                {
+                    int numNewlines = reader.Value.Count(c => c == '\n');
+                    for (int i=0; i<numNewlines-1; i++)
+                    {
+                        writer.WriteLine();
+                    }
+                }
+            }
+
+            writer.Flush();
+            return true;
         }
 
         private bool TryAssignmentShortcut()
@@ -219,7 +297,7 @@ namespace XRebirthBabyScript.Decompile
 
         private void WriteIndent()
         {
-            writer.Write(new string(' ', tabWidth * indentLevel));
+            writer.Write(new string(' ', _properties.Options.Indent * indentLevel));
         }
 
         private void WriteComment(string comment)
@@ -234,85 +312,6 @@ namespace XRebirthBabyScript.Decompile
             {
                 writer.Write("//" + NewlineRegex.Replace(comment, " "));
             }
-        }
-
-        public bool Convert(ConversionProperties properties)
-        {
-            _properties = properties;
-            writer = new StreamWriter(_properties.OutputStream);
-            reader = XmlReader.Create(_properties.InputStream);
-            
-            while (reader.Read())
-            {
-                if (reader.NodeType == XmlNodeType.Element)
-                {
-
-                    string shortName = properties.GetShortElementName(reader.Name);
-                    WriteIndent();
-
-                    //write a shorthand assign statement if possible
-                    bool shortcutUsed = TryAssignmentShortcut() || TryIncrementShortcut();
-
-                    //otherwise, write a normal element
-                    if (!shortcutUsed)
-                    {
-                        writer.Write(shortName ?? reader.Name);
-
-                        if (reader.HasAttributes)
-                        {
-                            int attrCount = reader.AttributeCount;
-                            writer.Write("(");
-                            WriteAttributes();
-                            writer.Write(")");
-                        }
-
-                        if (reader.IsEmptyElement)
-                        {
-                            writer.Write(";");
-                        }
-                    }
-
-                    //either way write any comment as necessary
-                    if (curElementComment != null)
-                    {
-                        writer.Write(' ');
-                        WriteComment(curElementComment);
-                        curElementComment = null;
-                    }
-
-                    writer.WriteLine();
-
-                    if (!shortcutUsed && !reader.IsEmptyElement)
-                    {
-                        WriteIndent();
-                        writer.WriteLine("{");
-                        indentLevel++;
-                    }
-                }
-                else if (reader.NodeType == XmlNodeType.EndElement)
-                {
-                    indentLevel--;
-                    WriteIndent();
-                    writer.WriteLine("}");
-                }
-                else if (reader.NodeType == XmlNodeType.Comment)
-                {
-                    WriteIndent();
-                    WriteComment(reader.Value);
-                    writer.WriteLine();
-                }
-                else if (reader.NodeType == XmlNodeType.Text || reader.NodeType == XmlNodeType.Whitespace)
-                {
-                    int numNewlines = reader.Value.Count(c => c == '\n');
-                    for (int i=0; i<numNewlines-1; i++)
-                    {
-                        writer.WriteLine();
-                    }
-                }
-            }
-
-            writer.Flush();
-            return true;
         }
     }
 }

@@ -32,7 +32,7 @@ namespace XRebirthBabyScript.Compile
                 Writer = XmlWriter.Create(_properties.OutputStream, new XmlWriterSettings
                 {
                     Indent = true,
-                    IndentChars = "  "
+                    IndentChars = new string(' ', _properties.Options.Indent)
                 });
                 Error = false;
                 Errors = new List<SemanticError>();
