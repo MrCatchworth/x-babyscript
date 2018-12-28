@@ -20,6 +20,8 @@ WS : [ \t\r\n]+ -> channel(WHITESPACE) ;
 
 PLUSPLUS : '++';
 MINUSMINUS : '--';
+PLUSEQUALS : '+=';
+MINUSEQUALS : '-=';
 
 EQUALS : '=' ;
 SEMICOLON : ';' ;

@@ -120,6 +120,22 @@ namespace XRebirthBabyScript.Compile
                 Writer.WriteEndElement();
             }
 
+            public override void EnterAdditionAssign(BabyScriptParser.AdditionAssignContext context) {
+                Writer.WriteStartElement("set_value");
+                Writer.WriteAttributeString("name", GetRuleFullText(context.leftHand));
+                Writer.WriteAttributeString("exact", GetRuleFullText(context.rightHand));
+                Writer.WriteAttributeString("operation", "add");
+                Writer.WriteEndElement();
+            }
+
+            public override void EnterSubtractionAssign(BabyScriptParser.SubtractionAssignContext context) {
+                Writer.WriteStartElement("set_value");
+                Writer.WriteAttributeString("name", GetRuleFullText(context.leftHand));
+                Writer.WriteAttributeString("exact", GetRuleFullText(context.rightHand));
+                Writer.WriteAttributeString("operation", "subtract");
+                Writer.WriteEndElement();
+            }
+
             public override void EnterAttribute(BabyScriptParser.AttributeContext context)
             {
                 var name = context.attrName?.Text;

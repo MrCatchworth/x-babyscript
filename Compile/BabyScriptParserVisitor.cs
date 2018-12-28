@@ -118,6 +118,20 @@ public interface IBabyScriptParserVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitDecrement([NotNull] BabyScriptParser.DecrementContext context);
 	/// <summary>
+	/// Visit a parse tree produced by the <c>AdditionAssign</c>
+	/// labeled alternative in <see cref="BabyScriptParser.node"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitAdditionAssign([NotNull] BabyScriptParser.AdditionAssignContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>SubtractionAssign</c>
+	/// labeled alternative in <see cref="BabyScriptParser.node"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitSubtractionAssign([NotNull] BabyScriptParser.SubtractionAssignContext context);
+	/// <summary>
 	/// Visit a parse tree produced by the <c>BlockComment</c>
 	/// labeled alternative in <see cref="BabyScriptParser.node"/>.
 	/// </summary>
@@ -150,11 +164,11 @@ public interface IBabyScriptParserVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitAttributeValue([NotNull] BabyScriptParser.AttributeValueContext context);
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="BabyScriptParser.nodeChildren"/>.
+	/// Visit a parse tree produced by <see cref="BabyScriptParser.elementChildren"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	Result VisitNodeChildren([NotNull] BabyScriptParser.NodeChildrenContext context);
+	Result VisitElementChildren([NotNull] BabyScriptParser.ElementChildrenContext context);
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="BabyScriptParser.lookupChain"/>.
 	/// </summary>

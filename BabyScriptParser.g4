@@ -75,10 +75,12 @@ elementName
     ;
 
 node
-    : eleName=elementName elementAttributes nodeChildren # Element
+    : eleName=elementName elementAttributes elementChildren # Element
     | leftHand=lookupChain EQUALS rightHand=expr SEMICOLON # Assign
 	| leftHand=lookupChain PLUSPLUS SEMICOLON # Increment
 	| leftHand=lookupChain MINUSMINUS SEMICOLON # Decrement
+    | leftHand=lookupChain PLUSEQUALS rightHand=expr SEMICOLON # AdditionAssign
+    | leftHand=lookupChain MINUSEQUALS rightHand=expr SEMICOLON # SubtractionAssign
 	| commentText=BLOCK_COMMENT # BlockComment
     | commentText=SLASH_COMMENT # SlashComment
     ;
@@ -98,9 +100,9 @@ attributeValue
     | exprLiteral=DOUBLE_QUOTE_STRING
     ;
 
-nodeChildren
-    : SEMICOLON
-    | OPBRACE rawList+=node* CLBRACE
+elementChildren
+    : SEMICOLON inlineComment=SLASH_COMMENT?
+    | inlineComment=SLASH_COMMENT? OPBRACE rawList+=node* CLBRACE
     ;
 
 lookupChain

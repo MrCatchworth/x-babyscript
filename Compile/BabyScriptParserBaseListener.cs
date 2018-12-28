@@ -203,6 +203,34 @@ public partial class BabyScriptParserBaseListener : IBabyScriptParserListener {
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitDecrement([NotNull] BabyScriptParser.DecrementContext context) { }
 	/// <summary>
+	/// Enter a parse tree produced by the <c>AdditionAssign</c>
+	/// labeled alternative in <see cref="BabyScriptParser.node"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterAdditionAssign([NotNull] BabyScriptParser.AdditionAssignContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by the <c>AdditionAssign</c>
+	/// labeled alternative in <see cref="BabyScriptParser.node"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitAdditionAssign([NotNull] BabyScriptParser.AdditionAssignContext context) { }
+	/// <summary>
+	/// Enter a parse tree produced by the <c>SubtractionAssign</c>
+	/// labeled alternative in <see cref="BabyScriptParser.node"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterSubtractionAssign([NotNull] BabyScriptParser.SubtractionAssignContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by the <c>SubtractionAssign</c>
+	/// labeled alternative in <see cref="BabyScriptParser.node"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitSubtractionAssign([NotNull] BabyScriptParser.SubtractionAssignContext context) { }
+	/// <summary>
 	/// Enter a parse tree produced by the <c>BlockComment</c>
 	/// labeled alternative in <see cref="BabyScriptParser.node"/>.
 	/// <para>The default implementation does nothing.</para>
@@ -267,17 +295,17 @@ public partial class BabyScriptParserBaseListener : IBabyScriptParserListener {
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitAttributeValue([NotNull] BabyScriptParser.AttributeValueContext context) { }
 	/// <summary>
-	/// Enter a parse tree produced by <see cref="BabyScriptParser.nodeChildren"/>.
+	/// Enter a parse tree produced by <see cref="BabyScriptParser.elementChildren"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	public virtual void EnterNodeChildren([NotNull] BabyScriptParser.NodeChildrenContext context) { }
+	public virtual void EnterElementChildren([NotNull] BabyScriptParser.ElementChildrenContext context) { }
 	/// <summary>
-	/// Exit a parse tree produced by <see cref="BabyScriptParser.nodeChildren"/>.
+	/// Exit a parse tree produced by <see cref="BabyScriptParser.elementChildren"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	public virtual void ExitNodeChildren([NotNull] BabyScriptParser.NodeChildrenContext context) { }
+	public virtual void ExitElementChildren([NotNull] BabyScriptParser.ElementChildrenContext context) { }
 	/// <summary>
 	/// Enter a parse tree produced by <see cref="BabyScriptParser.lookupChain"/>.
 	/// <para>The default implementation does nothing.</para>

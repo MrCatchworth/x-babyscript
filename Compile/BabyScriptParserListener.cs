@@ -173,6 +173,30 @@ public interface IBabyScriptParserListener : IParseTreeListener {
 	/// <param name="context">The parse tree.</param>
 	void ExitDecrement([NotNull] BabyScriptParser.DecrementContext context);
 	/// <summary>
+	/// Enter a parse tree produced by the <c>AdditionAssign</c>
+	/// labeled alternative in <see cref="BabyScriptParser.node"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterAdditionAssign([NotNull] BabyScriptParser.AdditionAssignContext context);
+	/// <summary>
+	/// Exit a parse tree produced by the <c>AdditionAssign</c>
+	/// labeled alternative in <see cref="BabyScriptParser.node"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitAdditionAssign([NotNull] BabyScriptParser.AdditionAssignContext context);
+	/// <summary>
+	/// Enter a parse tree produced by the <c>SubtractionAssign</c>
+	/// labeled alternative in <see cref="BabyScriptParser.node"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterSubtractionAssign([NotNull] BabyScriptParser.SubtractionAssignContext context);
+	/// <summary>
+	/// Exit a parse tree produced by the <c>SubtractionAssign</c>
+	/// labeled alternative in <see cref="BabyScriptParser.node"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitSubtractionAssign([NotNull] BabyScriptParser.SubtractionAssignContext context);
+	/// <summary>
 	/// Enter a parse tree produced by the <c>BlockComment</c>
 	/// labeled alternative in <see cref="BabyScriptParser.node"/>.
 	/// </summary>
@@ -227,15 +251,15 @@ public interface IBabyScriptParserListener : IParseTreeListener {
 	/// <param name="context">The parse tree.</param>
 	void ExitAttributeValue([NotNull] BabyScriptParser.AttributeValueContext context);
 	/// <summary>
-	/// Enter a parse tree produced by <see cref="BabyScriptParser.nodeChildren"/>.
+	/// Enter a parse tree produced by <see cref="BabyScriptParser.elementChildren"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	void EnterNodeChildren([NotNull] BabyScriptParser.NodeChildrenContext context);
+	void EnterElementChildren([NotNull] BabyScriptParser.ElementChildrenContext context);
 	/// <summary>
-	/// Exit a parse tree produced by <see cref="BabyScriptParser.nodeChildren"/>.
+	/// Exit a parse tree produced by <see cref="BabyScriptParser.elementChildren"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	void ExitNodeChildren([NotNull] BabyScriptParser.NodeChildrenContext context);
+	void ExitElementChildren([NotNull] BabyScriptParser.ElementChildrenContext context);
 	/// <summary>
 	/// Enter a parse tree produced by <see cref="BabyScriptParser.lookupChain"/>.
 	/// </summary>

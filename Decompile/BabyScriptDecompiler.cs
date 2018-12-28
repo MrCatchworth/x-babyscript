@@ -18,8 +18,8 @@ namespace XRebirthBabyScript.Decompile
         private static readonly Regex NewlineRegex = new Regex("\r\n|\r|\n");
         private int indentLevel;
         private string curElementComment;
-        private TextWriter writer;
-        private XmlReader reader;
+        public TextWriter Writer { get; private set; }
+        public XmlReader Reader { get; private set; }
         private ConversionProperties _properties;
 
         public BabyScriptDecompiler()
@@ -31,252 +31,208 @@ namespace XRebirthBabyScript.Decompile
         public bool Convert(ConversionProperties properties)
         {
             _properties = properties;
-            writer = new StreamWriter(_properties.OutputStream);
-            reader = XmlReader.Create(_properties.InputStream);
+            Writer = new StreamWriter(_properties.OutputStream);
+            Reader = XmlReader.Create(_properties.InputStream);
 
-            while (reader.Read())
+            var shortcuts = new List<ElementShortcut>();
+            // Set Exact
+            shortcuts.Add(new ElementShortcut()
             {
-                if (reader.NodeType == XmlNodeType.Element)
+                HeaderMatcher = new SetValueHeaderRule(),
+                AttributeMatchers = new List<IAttributeRule> {
+                        new NameAttributeRule("name"),
+                        new NameAttributeRule("exact")
+                    },
+                Apply = dc =>
+                {
+                    Writer.Write(Reader.GetAttribute("name"));
+                    Writer.Write(" = ");
+                    Writer.Write(Reader.GetAttribute("exact"));
+                    Writer.Write(";");
+                }
+            });
+
+            // Increment
+            shortcuts.Add(new ElementShortcut()
+            {
+                HeaderMatcher = new SetValueHeaderRule(),
+                AttributeMatchers = new List<IAttributeRule> {
+                        new NameAttributeRule("name"),
+                        new ExactAttributeRule("operation", "add")
+                    },
+                Apply = dc =>
+                {
+                    Writer.Write(Reader.GetAttribute("name"));
+                    Writer.Write(" ++");
+                    Writer.Write(";");
+                }
+            });
+
+            // Decrement
+            shortcuts.Add(new ElementShortcut()
+            {
+                HeaderMatcher = new SetValueHeaderRule(),
+                AttributeMatchers = new List<IAttributeRule> {
+                        new NameAttributeRule("name"),
+                        new ExactAttributeRule("operation", "subtract")
+                    },
+                Apply = dc =>
+                {
+                    Writer.Write(Reader.GetAttribute("name"));
+                    Writer.Write(" --");
+                    Writer.Write(";");
+                }
+            });
+
+            // Addition assign
+            shortcuts.Add(new ElementShortcut()
+            {
+                HeaderMatcher = new SetValueHeaderRule(),
+                AttributeMatchers = new List<IAttributeRule> {
+                        new NameAttributeRule("name"),
+                        new NameAttributeRule("exact"),
+                        new ExactAttributeRule("operation", "add")
+                    },
+                Apply = dc =>
+                {
+                    Writer.Write(Reader.GetAttribute("name"));
+                    Writer.Write(" += ");
+                    Writer.Write(Reader.GetAttribute("exact"));
+                    Writer.Write(";");
+                }
+            });
+
+            // Subtraction assign
+            shortcuts.Add(new ElementShortcut()
+            {
+                HeaderMatcher = new SetValueHeaderRule(),
+                AttributeMatchers = new List<IAttributeRule> {
+                        new NameAttributeRule("name"),
+                        new NameAttributeRule("exact"),
+                        new ExactAttributeRule("operation", "subtract")
+                    },
+                Apply = dc =>
+                {
+                    Writer.Write(Reader.GetAttribute("name"));
+                    Writer.Write(" -= ");
+                    Writer.Write(Reader.GetAttribute("exact"));
+                    Writer.Write(";");
+                }
+            });
+
+            while (Reader.Read())
+            {
+                if (Reader.NodeType == XmlNodeType.Element)
                 {
 
-                    string shortName = properties.GetShortElementName(reader.Name);
+                    string shortName = properties.GetShortElementName(Reader.Name);
                     WriteIndent();
 
                     //write a shorthand assign statement if possible
-                    bool shortcutUsed = TryAssignmentShortcut() || TryIncrementShortcut() || TryDecrementShortcut();
+                    var shortcutUsed = false;
+                    foreach (var shortcut in shortcuts)
+                    {
+                        if (shortcut.CheckMatch(Reader))
+                        {
+                            shortcut.Apply(this);
+                            shortcutUsed = true;
+                            break;
+                        }
+                    }
 
                     //otherwise, write a normal element
                     if (!shortcutUsed)
                     {
-                        string trueName = shortName ?? reader.Name;
-                        if (_properties.Options.ConvertCaseStyle) {
-                            trueName = SnakeCaseRegex.Replace(trueName, match => {
+                        string trueName = shortName ?? Reader.Name;
+                        if (_properties.Options.ConvertCaseStyle)
+                        {
+                            trueName = SnakeCaseRegex.Replace(trueName, match =>
+                            {
                                 return match.Groups[1].Captures[0].Value.ToUpper();
                             });
                         }
-                        writer.Write(trueName);
+                        Writer.Write(trueName);
 
-                        if (reader.HasAttributes)
+                        if (Reader.HasAttributes)
                         {
-                            int attrCount = reader.AttributeCount;
-                            writer.Write("(");
+                            int attrCount = Reader.AttributeCount;
+                            Writer.Write("(");
                             WriteAttributes();
-                            writer.Write(")");
+                            Writer.Write(")");
                         }
 
-                        if (reader.IsEmptyElement)
+                        if (Reader.IsEmptyElement)
                         {
-                            writer.Write(";");
+                            Writer.Write(";");
                         }
                     }
 
                     //either way write any comment as necessary
                     if (curElementComment != null)
                     {
-                        writer.Write(' ');
+                        Writer.Write(' ');
                         WriteComment(curElementComment);
                         curElementComment = null;
                     }
 
-                    writer.WriteLine();
+                    Writer.WriteLine();
 
-                    if (!shortcutUsed && !reader.IsEmptyElement)
+                    if (!shortcutUsed && !Reader.IsEmptyElement)
                     {
                         WriteIndent();
-                        writer.WriteLine("{");
+                        Writer.WriteLine("{");
                         indentLevel++;
                     }
                 }
-                else if (reader.NodeType == XmlNodeType.EndElement)
+                else if (Reader.NodeType == XmlNodeType.EndElement)
                 {
                     indentLevel--;
                     WriteIndent();
-                    writer.WriteLine("}");
+                    Writer.WriteLine("}");
                 }
-                else if (reader.NodeType == XmlNodeType.Comment)
+                else if (Reader.NodeType == XmlNodeType.Comment)
                 {
                     WriteIndent();
-                    WriteComment(reader.Value);
-                    writer.WriteLine();
+                    WriteComment(Reader.Value);
+                    Writer.WriteLine();
                 }
-                else if (reader.NodeType == XmlNodeType.Text || reader.NodeType == XmlNodeType.Whitespace)
+                else if (Reader.NodeType == XmlNodeType.Text || Reader.NodeType == XmlNodeType.Whitespace)
                 {
-                    int numNewlines = reader.Value.Count(c => c == '\n');
+                    int numNewlines = Reader.Value.Count(c => c == '\n');
                     for (int i = 0; i < numNewlines - 1; i++)
                     {
-                        writer.WriteLine();
+                        Writer.WriteLine();
                     }
                 }
             }
 
-            writer.Flush();
-            return true;
-        }
-
-        private bool TryAssignmentShortcut()
-        {
-            if (reader.Name != "set_value")
-            {
-                return false;
-            }
-            if (!reader.IsEmptyElement)
-            {
-                return false;
-            }
-
-            string varOperation = null;
-            string varName = null;
-
-            while (reader.MoveToNextAttribute())
-            {
-                if (reader.Name == "name")
-                {
-                    varName = reader.Value;
-                }
-                else if (reader.Name == "exact")
-                {
-                    varOperation = reader.Value;
-                }
-                else if (reader.Name == "comment")
-                {
-                    curElementComment = reader.Value;
-                }
-                else
-                {
-                    reader.MoveToElement();
-                    return false;
-                }
-            }
-
-            if (varOperation == null || varName == null)
-            {
-                reader.MoveToElement();
-                return false;
-            }
-
-            writer.Write(varName);
-            writer.Write(" = ");
-            writer.Write(varOperation);
-            writer.Write(";");
-            return true;
-        }
-        private bool TryIncrementShortcut()
-        {
-            if (reader.Name != "set_value")
-            {
-                return false;
-            }
-            if (!reader.IsEmptyElement)
-            {
-                return false;
-            }
-
-            string varOperation = null;
-            string varName = null;
-
-            while (reader.MoveToNextAttribute())
-            {
-                if (reader.Name == "name")
-                {
-                    varName = reader.Value;
-                }
-                else if (reader.Name == "operation" && reader.Value == "add")
-                {
-                    varOperation = reader.Value;
-                }
-                else if (reader.Name == "comment")
-                {
-                    curElementComment = reader.Value;
-                }
-                else
-                {
-                    reader.MoveToElement();
-                    return false;
-                }
-            }
-
-            if (varOperation == null || varName == null)
-            {
-                reader.MoveToElement();
-                return false;
-            }
-
-            writer.Write(varName);
-            writer.Write(" ++");
-            writer.Write(";");
-            return true;
-        }
-
-        private bool TryDecrementShortcut()
-        {
-            if (reader.Name != "set_value")
-            {
-                return false;
-            }
-            if (!reader.IsEmptyElement)
-            {
-                return false;
-            }
-
-            string varOperation = null;
-            string varName = null;
-
-            while (reader.MoveToNextAttribute())
-            {
-                if (reader.Name == "name")
-                {
-                    varName = reader.Value;
-                }
-                else if (reader.Name == "operation" && reader.Value == "subtract")
-                {
-                    varOperation = reader.Value;
-                }
-                else if (reader.Name == "comment")
-                {
-                    curElementComment = reader.Value;
-                }
-                else
-                {
-                    reader.MoveToElement();
-                    return false;
-                }
-            }
-
-            if (varOperation == null || varName == null)
-            {
-                reader.MoveToElement();
-                return false;
-            }
-
-            writer.Write(varName);
-            writer.Write(" --");
-            writer.Write(";");
+            Writer.Flush();
             return true;
         }
 
         private void WriteAttributes()
         {
-            if (!reader.HasAttributes)
+            if (!Reader.HasAttributes)
             {
                 return;
             }
 
             // string[] impliedNames = attrConfig.GetAnonAttributes(reader.Name);
-            _properties.ImpliedAttributeNames.TryGetValue(reader.Name, out var impliedNames);
+            _properties.ImpliedAttributeNames.TryGetValue(Reader.Name, out var impliedNames);
 
             List<BabyAttribute> allAttributes = new List<BabyAttribute>();
             List<BabyAttribute> namedAttributes = new List<BabyAttribute>();
             List<BabyAttribute> anonAttributes = new List<BabyAttribute>();
 
             //just get a list of all the attributes, in our own data structure
-            while (reader.MoveToNextAttribute())
+            while (Reader.MoveToNextAttribute())
             {
-                if (reader.Name == "comment")
+                if (Reader.Name == "comment")
                 {
-                    curElementComment = reader.Value;
+                    curElementComment = Reader.Value;
                     continue;
                 }
-                BabyAttribute newAttribute = new BabyAttribute(reader.Name.Replace(":", ""), reader.Value);
+                BabyAttribute newAttribute = new BabyAttribute(Reader.Name.Replace(":", ""), Reader.Value);
                 allAttributes.Add(newAttribute);
             }
 
@@ -320,8 +276,8 @@ namespace XRebirthBabyScript.Decompile
             {
                 if (!attribute.IsAnonymous)
                 {
-                    writer.Write(attribute.Name);
-                    writer.Write(":");
+                    Writer.Write(attribute.Name);
+                    Writer.Write(":");
                 }
 
                 BabyScriptLexer lexer = new BabyScriptLexer(new AntlrInputStream(attribute.Value));
@@ -331,40 +287,40 @@ namespace XRebirthBabyScript.Decompile
                 parser.exprEof();
                 if (parser.NumberOfSyntaxErrors > 0)
                 {
-                    Console.Error.WriteLine("Line {0}: \"{1}\" isn't a valid expression and will be wrapped in doublequotes", ((IXmlLineInfo)reader).LineNumber, attribute.Value);
-                    writer.Write("\"" + attribute.Value + "\"");
+                    Console.Error.WriteLine("Line {0}: \"{1}\" isn't a valid expression and will be wrapped in doublequotes", ((IXmlLineInfo)Reader).LineNumber, attribute.Value);
+                    Writer.Write("\"" + attribute.Value + "\"");
                 }
                 else
                 {
-                    writer.Write(attribute.Value);
+                    Writer.Write(attribute.Value);
                 }
 
                 if (allAttributes.Count > 1 && attrNumber < allAttributes.Count - 1)
                 {
-                    writer.Write(", ");
+                    Writer.Write(", ");
                 }
                 attrNumber++;
             }
 
-            reader.MoveToElement();
+            Reader.MoveToElement();
         }
 
         private void WriteIndent()
         {
-            writer.Write(new string(' ', _properties.Options.Indent * indentLevel));
+            Writer.Write(new string(' ', _properties.Options.Indent * indentLevel));
         }
 
         private void WriteComment(string comment)
         {
             if (comment.IndexOf('\n') != -1)
             {
-                writer.Write("/*");
-                writer.Write(comment);
-                writer.Write("*/");
+                Writer.Write("/*");
+                Writer.Write(comment);
+                Writer.Write("*/");
             }
             else
             {
-                writer.Write("//" + NewlineRegex.Replace(comment, " "));
+                Writer.Write("//" + NewlineRegex.Replace(comment, " "));
             }
         }
     }
