@@ -23,6 +23,15 @@
             "type": "coreclr",
             "request": "attach",
             "processId": "${command:pickProcess}"
+        },
+        {
+            "name": "Test Compile",
+            "type": "antlr-debug",
+            "request": "launch",
+            "input": "testData/snippets/lookupchain.txt",
+            "grammar": "BabyScriptParser.g4",
+            "startRule": "document",
+            "visualParseTree": true
         }
     ,]
 }

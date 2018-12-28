@@ -58,6 +58,12 @@ namespace XRebirthBabyScript
 
     }
 
+    [Verb("watch", HelpText = "Watch a directory for changes in XBS files and compile them automatically.")]
+    public class WatchOptions : Options
+    {
+        
+    }
+
     [Verb("decompile", HelpText = "Convert a file from XML to Babyscript.")]
     public class DecompileOptions : Options
     {

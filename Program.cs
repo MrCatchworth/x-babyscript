@@ -2,6 +2,7 @@
 using System;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using XRebirthBabyScript.Compile;
 using XRebirthBabyScript.Decompile;
 
@@ -9,32 +10,131 @@ namespace XRebirthBabyScript
 {
     class Program
     {
-        static void Main(string[] args)
+        private static void CompileWatchedFile(WatchOptions options, string sourcePath, WatcherChangeTypes changeTypes)
         {
-            var hasCompileVerb = false;
-            var hasDecompileVerb = false;
-            Options programOptions = null;
+            Thread.Sleep(2000);
 
-            args = new[] {
-                "decompile",
-                "-o", ".",
-                "GM_Assassination.xml"
+            Console.WriteLine($"Event in watched file {sourcePath} ({changeTypes}) ...");
+
+            var outputPath = Path.ChangeExtension(sourcePath, ".xml");
+
+            var logger = new BabyScriptLogger();
+            var conversionProperties = new ConversionProperties
+            {
+                Logger = logger,
+                Options = options
             };
 
-            Parser.Default.ParseArguments<Options, CompileOptions, DecompileOptions>(args)
+            try
+            {
+                conversionProperties.InputStream = new FileStream(sourcePath, FileMode.Open, FileAccess.Read);
+            }
+            catch (Exception e)
+            {
+                logger.LogError(sourcePath, $"Failed to open file for reading: {e.Message}");
+                return;
+            }
+
+            try
+            {
+                conversionProperties.OutputStream = new FileStream(outputPath, FileMode.Create, FileAccess.Write);
+            }
+            catch (Exception e)
+            {
+                logger.LogError(outputPath, $"Failed to open file for writing: {e.Message}");
+                return;
+            }
+
+            var success = false;
+            try
+            {
+                success = new BabyScriptCompiler().Convert(conversionProperties);
+            }
+            catch (Exception e)
+            {
+                logger.LogError(outputPath, $"Unexpected error while compiling: {e.Message}");
+            }
+            finally {
+                conversionProperties.OutputStream.Dispose();
+                conversionProperties.InputStream.Dispose();
+            }
+        }
+        private static void StartWatching(WatchOptions options)
+        {
+            // Verify number of input paths (1).
+            var numInputPaths = options.InputPaths.Count();
+            if (numInputPaths != 1)
+            {
+                Console.Error.WriteLine($"Expected 1 directory to watch; got {numInputPaths}");
+                Environment.ExitCode = 1;
+                return;
+            }
+
+            // Verify that the input path exists.
+            var watchPath = options.InputPaths.Single();
+            if (!Directory.Exists(watchPath))
+            {
+                Console.Error.WriteLine($"{watchPath} does not point to a valid directory to watch");
+                Environment.ExitCode = 1;
+                return;
+            }
+
+            // Watch for file changes in that directory.
+            var watcher = new FileSystemWatcher();
+            watcher.Path = watchPath;
+            watcher.NotifyFilter = NotifyFilters.LastWrite;
+            watcher.Filter = "*.xbs";
+
+            var watchHandler = new FileSystemEventHandler((sender, eArgs) =>
+            {
+                CompileWatchedFile(options, eArgs.FullPath, eArgs.ChangeType);
+            });
+            watcher.Created += watchHandler;
+            watcher.Changed += watchHandler;
+
+            watcher.EnableRaisingEvents = true;
+
+            Console.WriteLine($"Now watching {watchPath} for changes ...");
+
+            // We want to run the program indefinitely, and quit on an interrupt signal.
+            var quitEvent = new ManualResetEvent(false);
+            Console.CancelKeyPress += (sender, eArgs) =>
+            {
+                quitEvent.Set();
+                watcher.EnableRaisingEvents = false;
+                eArgs.Cancel = true;
+            };
+
+            quitEvent.WaitOne();
+        }
+
+        static void Main(string[] args)
+        {
+            var numVerbsSpecified = 0;
+            Options programOptions = null;
+            CompileOptions compileOptions = null;
+            DecompileOptions decompileOptions = null;
+            WatchOptions watchOptions = null;
+
+            Parser.Default.ParseArguments<Options, CompileOptions, DecompileOptions, WatchOptions>(args)
                 .WithParsed<Options>(options =>
                 {
                     programOptions = options;
                 })
                 .WithParsed<CompileOptions>(options =>
                 {
-                    Console.WriteLine("Compile options were specified");
-                    hasCompileVerb = true;
+                    numVerbsSpecified++;
+                    compileOptions = options;
                 })
                 .WithParsed<DecompileOptions>(options =>
                 {
-                    Console.WriteLine("Decompile options were specified");
-                    hasDecompileVerb = true;
+                    numVerbsSpecified++;
+                    decompileOptions = options;
+                })
+                .WithParsed<WatchOptions>(options =>
+                {
+                    numVerbsSpecified++;
+                    watchOptions = options;
                 })
                 .WithNotParsed(errors =>
                 {
@@ -50,17 +150,16 @@ namespace XRebirthBabyScript
                 return;
             }
 
-            if (hasCompileVerb && hasDecompileVerb)
+            if (numVerbsSpecified != 1)
             {
-                Console.Error.WriteLine("Conflicting modes - do you want to compile, or decompile?");
+                Console.Error.WriteLine("Incorrect number of program modes specified");
                 Environment.ExitCode = 1;
                 return;
             }
 
-            if (!hasCompileVerb && !hasDecompileVerb)
+            if (watchOptions != null)
             {
-                Console.Error.WriteLine("No mode specified - do you want to compile, or decompile?");
-                Environment.ExitCode = 1;
+                StartWatching(watchOptions);
                 return;
             }
 
@@ -98,7 +197,7 @@ namespace XRebirthBabyScript
 
                 if (outputIsDirectory)
                 {
-                    var extension = hasCompileVerb ? ".xml" : ".xrbs";
+                    var extension = compileOptions != null ? ".xml" : ("." + Globals.Extension);
                     var outputFileName = Path.GetFileNameWithoutExtension(inputPath) + extension;
                     outputPath = Path.Combine(programOptions.OutputPath, outputFileName);
                 }
@@ -140,7 +239,7 @@ namespace XRebirthBabyScript
                 Console.WriteLine($"{inputPath} -> {outputPath}");
 
                 IBabyScriptConverter converter;
-                if (hasCompileVerb)
+                if (compileOptions != null)
                 {
                     converter = new BabyScriptCompiler();
                 }
@@ -171,8 +270,6 @@ namespace XRebirthBabyScript
             }
 
             Environment.ExitCode = allFilesSuccessful ? 0 : 4;
-
-            Console.Read();
         }
     }
 }

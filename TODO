@@ -4,7 +4,7 @@ Comments:
 
 Command Line:
   ☐ Think of some more options...
-  ☐ Add an option for indent size
+  ✔ Add an option for indent size @done(18-11-01 18:51)
 
 Compilation/Syntax:
   ☐ Support camel <-> snake transformation

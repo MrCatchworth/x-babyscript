@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-// Generated from c:\Users\Johnny\Documents\programming\XRebirthBabyScript.Core\BabyScript.g4 by ANTLR 4.7.1
+// Generated from c:\Users\Johnny\Documents\programming\XRebirthBabyScript.Core\BabyScriptParser.g4 by ANTLR 4.7.1
 
 // Unreachable code detected
 #pragma warning disable 0162
@@ -21,11 +21,7 @@
 
 namespace XRebirthBabyScript.Compile {
 
-    using System.Linq;
-    using System.Text.RegularExpressions;
-	using XRebirthBabyScript.Tree;
-
-
+    using XRebirthBabyScript.Compile;
 
 using Antlr4.Runtime.Misc;
 using Antlr4.Runtime.Tree;
@@ -33,14 +29,14 @@ using IToken = Antlr4.Runtime.IToken;
 using ParserRuleContext = Antlr4.Runtime.ParserRuleContext;
 
 /// <summary>
-/// This class provides an empty implementation of <see cref="IBabyScriptVisitor{Result}"/>,
+/// This class provides an empty implementation of <see cref="IBabyScriptParserVisitor{Result}"/>,
 /// which can be extended to create a visitor which only needs to handle a subset
 /// of the available methods.
 /// </summary>
 /// <typeparam name="Result">The return type of the visit operation.</typeparam>
 [System.CodeDom.Compiler.GeneratedCode("ANTLR", "4.7.1")]
 [System.CLSCompliant(false)]
-public partial class BabyScriptBaseVisitor<Result> : AbstractParseTreeVisitor<Result>, IBabyScriptVisitor<Result> {
+public partial class BabyScriptParserBaseVisitor<Result> : AbstractParseTreeVisitor<Result>, IBabyScriptParserVisitor<Result> {
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="BabyScriptParser.document"/>.
 	/// <para>
@@ -122,6 +118,16 @@ public partial class BabyScriptBaseVisitor<Result> : AbstractParseTreeVisitor<Re
 	/// <return>The visitor result.</return>
 	public virtual Result VisitAtom([NotNull] BabyScriptParser.AtomContext context) { return VisitChildren(context); }
 	/// <summary>
+	/// Visit a parse tree produced by <see cref="BabyScriptParser.elementName"/>.
+	/// <para>
+	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
+	/// on <paramref name="context"/>.
+	/// </para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	public virtual Result VisitElementName([NotNull] BabyScriptParser.ElementNameContext context) { return VisitChildren(context); }
+	/// <summary>
 	/// Visit a parse tree produced by the <c>Element</c>
 	/// labeled alternative in <see cref="BabyScriptParser.node"/>.
 	/// <para>
@@ -133,7 +139,7 @@ public partial class BabyScriptBaseVisitor<Result> : AbstractParseTreeVisitor<Re
 	/// <return>The visitor result.</return>
 	public virtual Result VisitElement([NotNull] BabyScriptParser.ElementContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by the <c>Comment</c>
+	/// Visit a parse tree produced by the <c>Assign</c>
 	/// labeled alternative in <see cref="BabyScriptParser.node"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
@@ -142,7 +148,51 @@ public partial class BabyScriptBaseVisitor<Result> : AbstractParseTreeVisitor<Re
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	public virtual Result VisitComment([NotNull] BabyScriptParser.CommentContext context) { return VisitChildren(context); }
+	public virtual Result VisitAssign([NotNull] BabyScriptParser.AssignContext context) { return VisitChildren(context); }
+	/// <summary>
+	/// Visit a parse tree produced by the <c>Increment</c>
+	/// labeled alternative in <see cref="BabyScriptParser.node"/>.
+	/// <para>
+	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
+	/// on <paramref name="context"/>.
+	/// </para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	public virtual Result VisitIncrement([NotNull] BabyScriptParser.IncrementContext context) { return VisitChildren(context); }
+	/// <summary>
+	/// Visit a parse tree produced by the <c>Decrement</c>
+	/// labeled alternative in <see cref="BabyScriptParser.node"/>.
+	/// <para>
+	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
+	/// on <paramref name="context"/>.
+	/// </para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	public virtual Result VisitDecrement([NotNull] BabyScriptParser.DecrementContext context) { return VisitChildren(context); }
+	/// <summary>
+	/// Visit a parse tree produced by the <c>BlockComment</c>
+	/// labeled alternative in <see cref="BabyScriptParser.node"/>.
+	/// <para>
+	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
+	/// on <paramref name="context"/>.
+	/// </para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	public virtual Result VisitBlockComment([NotNull] BabyScriptParser.BlockCommentContext context) { return VisitChildren(context); }
+	/// <summary>
+	/// Visit a parse tree produced by the <c>SlashComment</c>
+	/// labeled alternative in <see cref="BabyScriptParser.node"/>.
+	/// <para>
+	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
+	/// on <paramref name="context"/>.
+	/// </para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	public virtual Result VisitSlashComment([NotNull] BabyScriptParser.SlashCommentContext context) { return VisitChildren(context); }
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="BabyScriptParser.elementAttributes"/>.
 	/// <para>
@@ -164,6 +214,16 @@ public partial class BabyScriptBaseVisitor<Result> : AbstractParseTreeVisitor<Re
 	/// <return>The visitor result.</return>
 	public virtual Result VisitAttribute([NotNull] BabyScriptParser.AttributeContext context) { return VisitChildren(context); }
 	/// <summary>
+	/// Visit a parse tree produced by <see cref="BabyScriptParser.attributeValue"/>.
+	/// <para>
+	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
+	/// on <paramref name="context"/>.
+	/// </para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	public virtual Result VisitAttributeValue([NotNull] BabyScriptParser.AttributeValueContext context) { return VisitChildren(context); }
+	/// <summary>
 	/// Visit a parse tree produced by <see cref="BabyScriptParser.nodeChildren"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
@@ -173,5 +233,15 @@ public partial class BabyScriptBaseVisitor<Result> : AbstractParseTreeVisitor<Re
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	public virtual Result VisitNodeChildren([NotNull] BabyScriptParser.NodeChildrenContext context) { return VisitChildren(context); }
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="BabyScriptParser.lookupChain"/>.
+	/// <para>
+	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
+	/// on <paramref name="context"/>.
+	/// </para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	public virtual Result VisitLookupChain([NotNull] BabyScriptParser.LookupChainContext context) { return VisitChildren(context); }
 }
 } // namespace XRebirthBabyScript.Compile

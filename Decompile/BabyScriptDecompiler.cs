@@ -13,6 +13,7 @@ namespace XRebirthBabyScript.Decompile
 {
     public class BabyScriptDecompiler : IBabyScriptConverter
     {
+        private static readonly Regex SnakeCaseRegex = new Regex("_([a-z])");
         //to break up multiline XML comments
         private static readonly Regex NewlineRegex = new Regex("\r\n|\r|\n");
         private int indentLevel;
@@ -32,7 +33,7 @@ namespace XRebirthBabyScript.Decompile
             _properties = properties;
             writer = new StreamWriter(_properties.OutputStream);
             reader = XmlReader.Create(_properties.InputStream);
-            
+
             while (reader.Read())
             {
                 if (reader.NodeType == XmlNodeType.Element)
@@ -42,12 +43,18 @@ namespace XRebirthBabyScript.Decompile
                     WriteIndent();
 
                     //write a shorthand assign statement if possible
-                    bool shortcutUsed = TryAssignmentShortcut() || TryIncrementShortcut();
+                    bool shortcutUsed = TryAssignmentShortcut() || TryIncrementShortcut() || TryDecrementShortcut();
 
                     //otherwise, write a normal element
                     if (!shortcutUsed)
                     {
-                        writer.Write(shortName ?? reader.Name);
+                        string trueName = shortName ?? reader.Name;
+                        if (_properties.Options.ConvertCaseStyle) {
+                            trueName = SnakeCaseRegex.Replace(trueName, match => {
+                                return match.Groups[1].Captures[0].Value.ToUpper();
+                            });
+                        }
+                        writer.Write(trueName);
 
                         if (reader.HasAttributes)
                         {
@@ -95,7 +102,7 @@ namespace XRebirthBabyScript.Decompile
                 else if (reader.NodeType == XmlNodeType.Text || reader.NodeType == XmlNodeType.Whitespace)
                 {
                     int numNewlines = reader.Value.Count(c => c == '\n');
-                    for (int i=0; i<numNewlines-1; i++)
+                    for (int i = 0; i < numNewlines - 1; i++)
                     {
                         writer.WriteLine();
                     }
@@ -196,6 +203,53 @@ namespace XRebirthBabyScript.Decompile
 
             writer.Write(varName);
             writer.Write(" ++");
+            writer.Write(";");
+            return true;
+        }
+
+        private bool TryDecrementShortcut()
+        {
+            if (reader.Name != "set_value")
+            {
+                return false;
+            }
+            if (!reader.IsEmptyElement)
+            {
+                return false;
+            }
+
+            string varOperation = null;
+            string varName = null;
+
+            while (reader.MoveToNextAttribute())
+            {
+                if (reader.Name == "name")
+                {
+                    varName = reader.Value;
+                }
+                else if (reader.Name == "operation" && reader.Value == "subtract")
+                {
+                    varOperation = reader.Value;
+                }
+                else if (reader.Name == "comment")
+                {
+                    curElementComment = reader.Value;
+                }
+                else
+                {
+                    reader.MoveToElement();
+                    return false;
+                }
+            }
+
+            if (varOperation == null || varName == null)
+            {
+                reader.MoveToElement();
+                return false;
+            }
+
+            writer.Write(varName);
+            writer.Write(" --");
             writer.Write(";");
             return true;
         }

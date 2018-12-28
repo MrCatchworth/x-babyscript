@@ -18,6 +18,9 @@ namespace XRebirthBabyScript
             { "do_all",                     new[]{"counter", "exact"} },
             { "do_while",                   new[]{"value"} },
 
+            { "label",                      new[]{"name"} },
+            { "resume",                     new[]{"label"} },
+
             //Cue-related elements
             { "param",                      new[]{"name", "value"} },
             { "reset_cue",                  new[]{"cue"} },
@@ -53,6 +56,7 @@ namespace XRebirthBabyScript
             //General actions
             //TODO: extremely incomplete!
             { "debug_text",                 new[]{"text"} },
+            { "wait",                       new[]{"exact"} },
             { "speak",                      new[]{"actor", "line"} },
             { "start_script",               new[]{"name", "object"} },
             { "reward_player",              new[]{"money"} },
@@ -60,6 +64,7 @@ namespace XRebirthBabyScript
             { "set_job_active",             new[]{"job", "activate"} },
             { "set_object_active",          new[]{"object", "activate"} },
             { "set_known",                  new[]{"object", "known"} },
+            { "signal_objects",             new[]{"object", "param", "param2", "param3"} }
 
         };
 

@@ -10,6 +10,28 @@
                 "${workspaceFolder}/XRebirthBabyScript.Core.csproj"
             ],
             "problemMatcher": "$msCompile"
+        },
+
+        {
+            "label": "Run - Decompile",
+            "command": "dotnet",
+            "args": [
+                "run",
+                "decompile",
+                "-o", "testData\\xbs_out",
+                "${file}"
+            ]
+        },
+
+        {
+            "label": "Run - Compile",
+            "command": "dotnet",
+            "args": [
+                "run",
+                "compile",
+                "-o", "testData\\xml_out",
+                "${file}"
+            ]
         }
     ]
 }
