@@ -1,4 +1,4 @@
-namespace XRebirthBabyScript.Decompile
+namespace XBabyScript.Decompile
 {
     public class ExactAttributeRule : IAttributeRule
     {

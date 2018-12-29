@@ -1,6 +1,6 @@
 using System.Xml;
 
-namespace XRebirthBabyScript.Decompile
+namespace XBabyScript.Decompile
 {
     public interface IHeaderRule
     {

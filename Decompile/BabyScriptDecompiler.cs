@@ -6,10 +6,10 @@ using System.Text.RegularExpressions;
 using Antlr4.Runtime;
 using Antlr4.Runtime.Misc;
 using System.IO;
-using XRebirthBabyScript.Tree;
-using XRebirthBabyScript.Compile;
+using XBabyScript.Tree;
+using XBabyScript.Compile;
 
-namespace XRebirthBabyScript.Decompile
+namespace XBabyScript.Decompile
 {
     public class BabyScriptDecompiler : IBabyScriptConverter
     {
@@ -38,8 +38,8 @@ namespace XRebirthBabyScript.Decompile
             // Set Exact
             shortcuts.Add(new ElementShortcut()
             {
-                HeaderMatcher = new SetValueHeaderRule(),
-                AttributeMatchers = new List<IAttributeRule> {
+                HeaderRule = new SetValueHeaderRule(),
+                AttributeRules = new List<IAttributeRule> {
                         new NameAttributeRule("name"),
                         new NameAttributeRule("exact")
                     },
@@ -55,8 +55,8 @@ namespace XRebirthBabyScript.Decompile
             // Increment
             shortcuts.Add(new ElementShortcut()
             {
-                HeaderMatcher = new SetValueHeaderRule(),
-                AttributeMatchers = new List<IAttributeRule> {
+                HeaderRule = new SetValueHeaderRule(),
+                AttributeRules = new List<IAttributeRule> {
                         new NameAttributeRule("name"),
                         new ExactAttributeRule("operation", "add")
                     },
@@ -71,8 +71,8 @@ namespace XRebirthBabyScript.Decompile
             // Decrement
             shortcuts.Add(new ElementShortcut()
             {
-                HeaderMatcher = new SetValueHeaderRule(),
-                AttributeMatchers = new List<IAttributeRule> {
+                HeaderRule = new SetValueHeaderRule(),
+                AttributeRules = new List<IAttributeRule> {
                         new NameAttributeRule("name"),
                         new ExactAttributeRule("operation", "subtract")
                     },
@@ -87,8 +87,8 @@ namespace XRebirthBabyScript.Decompile
             // Addition assign
             shortcuts.Add(new ElementShortcut()
             {
-                HeaderMatcher = new SetValueHeaderRule(),
-                AttributeMatchers = new List<IAttributeRule> {
+                HeaderRule = new SetValueHeaderRule(),
+                AttributeRules = new List<IAttributeRule> {
                         new NameAttributeRule("name"),
                         new NameAttributeRule("exact"),
                         new ExactAttributeRule("operation", "add")
@@ -105,8 +105,8 @@ namespace XRebirthBabyScript.Decompile
             // Subtraction assign
             shortcuts.Add(new ElementShortcut()
             {
-                HeaderMatcher = new SetValueHeaderRule(),
-                AttributeMatchers = new List<IAttributeRule> {
+                HeaderRule = new SetValueHeaderRule(),
+                AttributeRules = new List<IAttributeRule> {
                         new NameAttributeRule("name"),
                         new NameAttributeRule("exact"),
                         new ExactAttributeRule("operation", "subtract")

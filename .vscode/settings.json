@@ -4,7 +4,7 @@
         "language": "CSharp",
         "listeners": true,
         "visitors": true,
-        "package": "XRebirthBabyScript.Compile",
+        "package": "XBabyScript.Compile",
         "outputDir": "./Compile"
     }
 }

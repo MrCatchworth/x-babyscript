@@ -9,9 +9,9 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Xml;
-using XRebirthBabyScript.Tree;
+using XBabyScript.Tree;
 
-namespace XRebirthBabyScript.Compile
+namespace XBabyScript.Compile
 {
     public class BabyScriptCompiler : IBabyScriptConverter
     {

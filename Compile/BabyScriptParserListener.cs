@@ -19,9 +19,9 @@
 // Ambiguous reference in cref attribute
 #pragma warning disable 419
 
-namespace XRebirthBabyScript.Compile {
+namespace XBabyScript.Compile {
 
-    using XRebirthBabyScript.Compile;
+    using XBabyScript.Compile;
 
 using Antlr4.Runtime.Misc;
 using IParseTreeListener = Antlr4.Runtime.Tree.IParseTreeListener;

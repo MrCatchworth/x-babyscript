@@ -1,6 +1,6 @@
 using System;
 
-namespace XRebirthBabyScript.Tree
+namespace XBabyScript.Tree
 {
     public class BabyElement : BabyNode
     {

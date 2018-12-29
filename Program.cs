@@ -3,10 +3,10 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Threading;
-using XRebirthBabyScript.Compile;
-using XRebirthBabyScript.Decompile;
+using XBabyScript.Compile;
+using XBabyScript.Decompile;
 
-namespace XRebirthBabyScript
+namespace XBabyScript
 {
     class Program
     {

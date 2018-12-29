@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-// Generated from c:\Users\Johnny\Documents\programming\XRebirthBabyScript.Core/BabyScriptLexer.g4 by ANTLR 4.7.1
+// Generated from c:\Users\Johnny\Documents\programming\XRebirthBabyScript.Core\BabyScriptLexer.g4 by ANTLR 4.7.1
 
 // Unreachable code detected
 #pragma warning disable 0162
@@ -19,7 +19,7 @@
 // Ambiguous reference in cref attribute
 #pragma warning disable 419
 
-namespace XRebirthBabyScript.Compile {
+namespace XBabyScript.Compile {
 using System;
 using System.IO;
 using System.Text;
@@ -440,4 +440,4 @@ public partial class BabyScriptLexer : Lexer {
 
 
 }
-} // namespace XRebirthBabyScript.Compile
+} // namespace XBabyScript.Compile

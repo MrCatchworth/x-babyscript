@@ -4,7 +4,7 @@ using System.IO;
 using System.Text;
 using CommandLine;
 
-namespace XRebirthBabyScript
+namespace XBabyScript
 {
     public class Options
     {

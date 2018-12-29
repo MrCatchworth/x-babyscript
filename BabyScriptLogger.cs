@@ -2,7 +2,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace XRebirthBabyScript
+namespace XBabyScript
 {
     public class BabyScriptLogger
     {

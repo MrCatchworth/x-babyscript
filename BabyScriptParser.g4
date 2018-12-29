@@ -9,7 +9,7 @@ options
 
 @header
 {
-    using XRebirthBabyScript.Compile;
+    using XBabyScript.Compile;
 }
 
 document

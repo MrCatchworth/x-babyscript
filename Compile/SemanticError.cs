@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace XRebirthBabyScript.Compile
+namespace XBabyScript.Compile
 {
     public class SemanticError
     {
