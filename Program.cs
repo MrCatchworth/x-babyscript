@@ -8,13 +8,20 @@ using XBabyScript.Decompile;
 
 namespace XBabyScript
 {
+    public enum OutputType
+    {
+        File,
+        Directory,
+        Auto
+    }
+
     class Program
     {
         private static void CompileWatchedFile(WatchOptions options, string sourcePath, WatcherChangeTypes changeTypes)
         {
             Thread.Sleep(2000);
 
-            Console.WriteLine($"Event in watched file {sourcePath} ({changeTypes}) ...");
+            Console.Error.WriteLine($"Event in watched file {sourcePath} ({changeTypes}) ...");
 
             var outputPath = Path.ChangeExtension(sourcePath, ".xml");
 
@@ -57,6 +64,15 @@ namespace XBabyScript
             finally {
                 conversionProperties.OutputStream.Dispose();
                 conversionProperties.InputStream.Dispose();
+            }
+
+            if (success)
+            {
+                Console.Error.WriteLine("Done");
+            }
+            else
+            {
+                Console.Error.WriteLine("Failed");
             }
         }
         private static void StartWatching(WatchOptions options)
@@ -163,20 +179,17 @@ namespace XBabyScript
                 return;
             }
 
+            var conversionType = compileOptions != null ? ConversionType.Compile : ConversionType.Decompile;
+
             var expandedPaths = programOptions.ExpandedInputPaths;
 
-            var outputIsDirectory = false;
-
-            if (programOptions.IsSingleInputFile)
+            if (!programOptions.IsSingleInputFile && programOptions.OutputType != OutputType.Auto)
             {
-                outputIsDirectory = Directory.Exists(programOptions.OutputPath);
-            }
-            else
-            {
-                outputIsDirectory = true;
                 if (!Directory.Exists(programOptions.OutputPath))
                 {
-                    Console.Error.WriteLine($"The output path must be a valid directory when variable input files are specified");
+                    Console.Error.WriteLine($"Output path {programOptions.OutputPath} must refer to a valid directory");
+                    Environment.ExitCode = 1;
+                    return;
                 }
             }
 
@@ -193,18 +206,7 @@ namespace XBabyScript
 
                 conversionProperties.FileName = inputPath;
 
-                string outputPath;
-
-                if (outputIsDirectory)
-                {
-                    var extension = compileOptions != null ? ".xml" : ("." + Globals.Extension);
-                    var outputFileName = Path.GetFileNameWithoutExtension(inputPath) + extension;
-                    outputPath = Path.Combine(programOptions.OutputPath, outputFileName);
-                }
-                else
-                {
-                    outputPath = programOptions.OutputPath;
-                }
+                string outputPath = programOptions.GetOutputPathForFile(inputPath, conversionType);
 
                 if (File.Exists(outputPath) && !programOptions.Force)
                 {
