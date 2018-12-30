@@ -100,6 +100,7 @@ namespace XBabyScript
             watcher.Path = watchPath;
             watcher.NotifyFilter = NotifyFilters.LastWrite;
             watcher.Filter = "*.xbs";
+            watcher.IncludeSubdirectories = true;
 
             var watchHandler = new FileSystemEventHandler((sender, eArgs) =>
             {
@@ -110,7 +111,7 @@ namespace XBabyScript
 
             watcher.EnableRaisingEvents = true;
 
-            Console.WriteLine($"Now watching {watchPath} for changes ...");
+            Console.Error.WriteLine($"Now watching {watchPath} for changes ...");
 
             // We want to run the program indefinitely, and quit on an interrupt signal.
             var quitEvent = new ManualResetEvent(false);
