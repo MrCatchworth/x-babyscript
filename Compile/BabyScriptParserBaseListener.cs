@@ -332,4 +332,4 @@ public partial class BabyScriptParserBaseListener : IBabyScriptParserListener {
 	/// <remarks>The default implementation does nothing.</remarks>
 	public virtual void VisitErrorNode([NotNull] IErrorNode node) { }
 }
-} // namespace XRebirthBabyScript.Compile
+} // namespace XBabyScript.Compile

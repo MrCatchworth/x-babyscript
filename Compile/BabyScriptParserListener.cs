@@ -271,4 +271,4 @@ public interface IBabyScriptParserListener : IParseTreeListener {
 	/// <param name="context">The parse tree.</param>
 	void ExitLookupChain([NotNull] BabyScriptParser.LookupChainContext context);
 }
-} // namespace XRebirthBabyScript.Compile
+} // namespace XBabyScript.Compile

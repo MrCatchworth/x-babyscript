@@ -266,4 +266,4 @@ public partial class BabyScriptParserBaseVisitor<Result> : AbstractParseTreeVisi
 	/// <return>The visitor result.</return>
 	public virtual Result VisitLookupChain([NotNull] BabyScriptParser.LookupChainContext context) { return VisitChildren(context); }
 }
-} // namespace XRebirthBabyScript.Compile
+} // namespace XBabyScript.Compile

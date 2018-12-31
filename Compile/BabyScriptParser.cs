@@ -2040,4 +2040,4 @@ public partial class BabyScriptParser : Parser {
 
 
 }
-} // namespace XRebirthBabyScript.Compile
+} // namespace XBabyScript.Compile

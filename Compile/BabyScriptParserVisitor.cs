@@ -176,4 +176,4 @@ public interface IBabyScriptParserVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitLookupChain([NotNull] BabyScriptParser.LookupChainContext context);
 }
-} // namespace XRebirthBabyScript.Compile
+} // namespace XBabyScript.Compile
