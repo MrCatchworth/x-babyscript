@@ -21,6 +21,8 @@ namespace XBabyScript
             { "label",                      new[]{"name"} },
             { "resume",                     new[]{"label"} },
 
+            { "return",                     new[]{"value"} },
+
             //Cue-related elements
             { "param",                      new[]{"name", "value"} },
             { "reset_cue",                  new[]{"cue"} },
@@ -33,6 +35,8 @@ namespace XBabyScript
             { "delay",                      new[]{"exact"} },
             { "remove_mission",             new[]{"cue"} },
             { "include_actions",            new[]{"ref"} },
+
+            { "input_param",                new[]{"name", "value"} },
 
             //List operations
             { "create_list",                new[]{"name"} },

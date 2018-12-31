@@ -239,7 +239,7 @@ namespace XBabyScript
                     continue;
                 }
 
-                Console.WriteLine($"{inputPath} -> {outputPath}");
+                Console.Error.WriteLine($"{inputPath} -> {outputPath}");
 
                 IBabyScriptConverter converter;
                 if (compileOptions != null)
