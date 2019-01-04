@@ -120,90 +120,98 @@ namespace XBabyScript.Decompile
                 }
             });
 
-            while (Reader.Read())
+            try
             {
-                if (Reader.NodeType == XmlNodeType.Element)
+                while (Reader.Read())
                 {
-
-                    string shortName = properties.GetShortElementName(Reader.Name);
-                    WriteIndent();
-
-                    //write a shorthand assign statement if possible
-                    var shortcutUsed = false;
-                    foreach (var shortcut in shortcuts)
+                    if (Reader.NodeType == XmlNodeType.Element)
                     {
-                        if (shortcut.CheckMatch(Reader))
-                        {
-                            shortcut.Apply(this);
-                            shortcutUsed = true;
-                            break;
-                        }
-                    }
 
-                    //otherwise, write a normal element
-                    if (!shortcutUsed)
-                    {
-                        string trueName = shortName ?? Reader.Name;
-                        if (_properties.Options.ConvertCaseStyle)
+                        string shortName = properties.GetShortElementName(Reader.Name);
+                        WriteIndent();
+
+                        //write a shorthand assign statement if possible
+                        var shortcutUsed = false;
+                        foreach (var shortcut in shortcuts)
                         {
-                            trueName = SnakeCaseRegex.Replace(trueName, match =>
+                            if (shortcut.CheckMatch(Reader))
                             {
-                                return match.Groups[1].Captures[0].Value.ToUpper();
-                            });
-                        }
-                        Writer.Write(trueName);
-
-                        if (Reader.HasAttributes)
-                        {
-                            int attrCount = Reader.AttributeCount;
-                            Writer.Write("(");
-                            WriteAttributes();
-                            Writer.Write(")");
+                                shortcut.Apply(this);
+                                shortcutUsed = true;
+                                break;
+                            }
                         }
 
-                        if (Reader.IsEmptyElement)
+                        //otherwise, write a normal element
+                        if (!shortcutUsed)
                         {
-                            Writer.Write(";");
+                            string trueName = shortName ?? Reader.Name;
+                            if (_properties.Options.ConvertCaseStyle)
+                            {
+                                trueName = SnakeCaseRegex.Replace(trueName, match =>
+                                {
+                                    return match.Groups[1].Captures[0].Value.ToUpper();
+                                });
+                            }
+                            Writer.Write(trueName);
+
+                            if (Reader.HasAttributes)
+                            {
+                                int attrCount = Reader.AttributeCount;
+                                Writer.Write("(");
+                                WriteAttributes();
+                                Writer.Write(")");
+                            }
+
+                            if (Reader.IsEmptyElement)
+                            {
+                                Writer.Write(";");
+                            }
+                        }
+
+                        //either way write any comment as necessary
+                        if (curElementComment != null)
+                        {
+                            Writer.Write(' ');
+                            WriteComment(curElementComment);
+                            curElementComment = null;
+                        }
+
+                        Writer.WriteLine();
+
+                        if (!shortcutUsed && !Reader.IsEmptyElement)
+                        {
+                            WriteIndent();
+                            Writer.WriteLine("{");
+                            indentLevel++;
                         }
                     }
-
-                    //either way write any comment as necessary
-                    if (curElementComment != null)
+                    else if (Reader.NodeType == XmlNodeType.EndElement)
                     {
-                        Writer.Write(' ');
-                        WriteComment(curElementComment);
-                        curElementComment = null;
+                        indentLevel--;
+                        WriteIndent();
+                        Writer.WriteLine("}");
                     }
-
-                    Writer.WriteLine();
-
-                    if (!shortcutUsed && !Reader.IsEmptyElement)
+                    else if (Reader.NodeType == XmlNodeType.Comment)
                     {
                         WriteIndent();
-                        Writer.WriteLine("{");
-                        indentLevel++;
-                    }
-                }
-                else if (Reader.NodeType == XmlNodeType.EndElement)
-                {
-                    indentLevel--;
-                    WriteIndent();
-                    Writer.WriteLine("}");
-                }
-                else if (Reader.NodeType == XmlNodeType.Comment)
-                {
-                    WriteIndent();
-                    WriteComment(Reader.Value);
-                    Writer.WriteLine();
-                }
-                else if (Reader.NodeType == XmlNodeType.Text || Reader.NodeType == XmlNodeType.Whitespace)
-                {
-                    int numNewlines = Reader.Value.Count(c => c == '\n');
-                    for (int i = 0; i < numNewlines - 1; i++)
-                    {
+                        WriteComment(Reader.Value);
                         Writer.WriteLine();
                     }
+                    else if (Reader.NodeType == XmlNodeType.Text || Reader.NodeType == XmlNodeType.Whitespace)
+                    {
+                        int numNewlines = Reader.Value.Count(c => c == '\n');
+                        for (int i = 0; i < numNewlines - 1; i++)
+                        {
+                            Writer.WriteLine();
+                        }
+                    }
                 }
+            }
+            catch (XmlException e)
+            {
+                _properties.Logger.LogError(_properties.FileName, e.LineNumber, e.LinePosition, e.Message);
+                return false;
             }
 
             Writer.Flush();
