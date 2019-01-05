@@ -23,47 +23,10 @@ namespace XBabyScript.Compile
             return stream.GetText(new Interval(context.Start.StartIndex, context.Stop.StopIndex));
         }
 
-
-        private static readonly Dictionary<char, string> StringEscapeCodes = new Dictionary<char, string> {
-            {'n', "\n"},
-            {'t', "\t"},
-            {'r', "\r"},
-            {'\\', "\\"},
-
-        };
-
-        private static string GetEscapeCodeValue(char escapeCode, char terminatorChar)
-        {
-            if (escapeCode == terminatorChar)
-            {
-                return terminatorChar.ToString();
-            }
-
-            var found = StringEscapeCodes.TryGetValue(escapeCode, out var foundValue);
-            if (found)
-            {
-                return foundValue;
-            }
-            else
-            {
-                throw new ArgumentException($"Unrecognised escape code \"{escapeCode}\"");
-            }
-        }
-
-        private static readonly Regex EscapeCodeRegex = new Regex(@"\\(.)");
-        private static string UnescapeString(string escapedString, char terminatorChar)
-        {
-            var unescaped = EscapeCodeRegex.Replace(escapedString, match => {
-                return GetEscapeCodeValue(match.Groups[1].Captures[0].Value[0], terminatorChar);
-            });
-
-            return unescaped;
-        }
-
         private static string ParseDoubleQuoteString(string doubleQuoteString)
         {
             var quotesStripped = doubleQuoteString.Substring(1, doubleQuoteString.Length - 2);
-            return UnescapeString(quotesStripped, '"');
+            return EscapeCode.Unescape(quotesStripped, '"');
         }
 
         public class XmlWritingListener : BabyScriptParserBaseListener

@@ -198,13 +198,21 @@ namespace XBabyScript.Decompile
                         WriteComment(Reader.Value);
                         Writer.WriteLine();
                     }
-                    else if (Reader.NodeType == XmlNodeType.Text || Reader.NodeType == XmlNodeType.Whitespace)
+                    else if (Reader.NodeType == XmlNodeType.Whitespace)
                     {
-                        int numNewlines = Reader.Value.Count(c => c == '\n');
+                        var numNewlines = Reader.Value.Count(c => c == '\n');
                         for (int i = 0; i < numNewlines - 1; i++)
                         {
                             Writer.WriteLine();
                         }
+                    }
+                    else if (Reader.NodeType == XmlNodeType.Text)
+                    {
+                        var textValue = EscapeCode.Escape(Reader.Value.Trim(), '"');
+
+                        WriteIndent();
+                        Writer.Write("\"" + textValue + "\";");
+                        Writer.WriteLine();
                     }
                 }
             }
