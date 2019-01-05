@@ -231,6 +231,20 @@ public partial class BabyScriptParserBaseListener : IBabyScriptParserListener {
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitSubtractionAssign([NotNull] BabyScriptParser.SubtractionAssignContext context) { }
 	/// <summary>
+	/// Enter a parse tree produced by the <c>Text</c>
+	/// labeled alternative in <see cref="BabyScriptParser.node"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterText([NotNull] BabyScriptParser.TextContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by the <c>Text</c>
+	/// labeled alternative in <see cref="BabyScriptParser.node"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitText([NotNull] BabyScriptParser.TextContext context) { }
+	/// <summary>
 	/// Enter a parse tree produced by the <c>BlockComment</c>
 	/// labeled alternative in <see cref="BabyScriptParser.node"/>.
 	/// <para>The default implementation does nothing.</para>

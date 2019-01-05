@@ -81,6 +81,7 @@ node
 	| leftHand=lookupChain MINUSMINUS SEMICOLON # Decrement
     | leftHand=lookupChain PLUSEQUALS rightHand=expr SEMICOLON # AdditionAssign
     | leftHand=lookupChain MINUSEQUALS rightHand=expr SEMICOLON # SubtractionAssign
+    | textValue=DOUBLE_QUOTE_STRING SEMICOLON # Text
 	| commentText=BLOCK_COMMENT # BlockComment
     | commentText=SLASH_COMMENT # SlashComment
     ;

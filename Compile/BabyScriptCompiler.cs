@@ -17,9 +17,53 @@ namespace XBabyScript.Compile
     {
         private static readonly Regex CamelCaseRegex = new Regex("(?<=[a-z])([A-Z])");
         public static readonly Regex IdRegex = new Regex("^\\$?[A-Za-z][A-Za-z0-9_]*$");
-        private static string GetRuleFullText(ParserRuleContext context) {
+        private static string GetRuleFullText(ParserRuleContext context)
+        {
             var stream = context.Start.InputStream;
             return stream.GetText(new Interval(context.Start.StartIndex, context.Stop.StopIndex));
+        }
+
+
+        private static readonly Dictionary<char, string> StringEscapeCodes = new Dictionary<char, string> {
+            {'n', "\n"},
+            {'t', "\t"},
+            {'r', "\r"},
+            {'\\', "\\"},
+
+        };
+
+        private static string GetEscapeCodeValue(char escapeCode, char terminatorChar)
+        {
+            if (escapeCode == terminatorChar)
+            {
+                return terminatorChar.ToString();
+            }
+
+            var found = StringEscapeCodes.TryGetValue(escapeCode, out var foundValue);
+            if (found)
+            {
+                return foundValue;
+            }
+            else
+            {
+                throw new ArgumentException($"Unrecognised escape code \"{escapeCode}\"");
+            }
+        }
+
+        private static readonly Regex EscapeCodeRegex = new Regex(@"\\(.)");
+        private static string UnescapeString(string escapedString, char terminatorChar)
+        {
+            var unescaped = EscapeCodeRegex.Replace(escapedString, match => {
+                return GetEscapeCodeValue(match.Groups[1].Captures[0].Value[0], terminatorChar);
+            });
+
+            return unescaped;
+        }
+
+        private static string ParseDoubleQuoteString(string doubleQuoteString)
+        {
+            var quotesStripped = doubleQuoteString.Substring(1, doubleQuoteString.Length - 2);
+            return UnescapeString(quotesStripped, '"');
         }
 
         public class XmlWritingListener : BabyScriptParserBaseListener
@@ -65,12 +109,14 @@ namespace XBabyScript.Compile
                 CurrentElement = ctx;
             }
 
-            public override void EnterSlashComment(BabyScriptParser.SlashCommentContext context) {
+            public override void EnterSlashComment(BabyScriptParser.SlashCommentContext context)
+            {
                 var commentText = context.commentText.Text.Substring(2);
                 Writer.WriteComment(commentText);
             }
 
-            public override void EnterBlockComment(BabyScriptParser.BlockCommentContext context) {
+            public override void EnterBlockComment(BabyScriptParser.BlockCommentContext context)
+            {
                 var commentText = context.commentText.Text.Substring(2, context.commentText.Text.Length - 4);
                 Writer.WriteComment(commentText);
             }
@@ -83,7 +129,8 @@ namespace XBabyScript.Compile
                 {
                     realName = fullName;
                 }
-                realName = CamelCaseRegex.Replace(realName, match => {
+                realName = CamelCaseRegex.Replace(realName, match =>
+                {
                     return "_" + match.Groups[1].Captures[0].Value.ToLower();
                 });
 
@@ -99,28 +146,40 @@ namespace XBabyScript.Compile
                 Writer.WriteEndElement();
             }
 
-            public override void EnterAssign(BabyScriptParser.AssignContext context) {
+            public override void EnterAssign(BabyScriptParser.AssignContext context)
+            {
+                if (Error) return;
+
                 Writer.WriteStartElement("set_value");
                 Writer.WriteAttributeString("name", GetRuleFullText(context.leftHand));
                 Writer.WriteAttributeString("exact", GetRuleFullText(context.rightHand));
                 Writer.WriteEndElement();
             }
 
-            public override void EnterIncrement(BabyScriptParser.IncrementContext context) {
+            public override void EnterIncrement(BabyScriptParser.IncrementContext context)
+            {
+                if (Error) return;
+
                 Writer.WriteStartElement("set_value");
                 Writer.WriteAttributeString("name", GetRuleFullText(context.leftHand));
                 Writer.WriteAttributeString("operation", "add");
                 Writer.WriteEndElement();
             }
 
-            public override void EnterDecrement(BabyScriptParser.DecrementContext context) {
+            public override void EnterDecrement(BabyScriptParser.DecrementContext context)
+            {
+                if (Error) return;
+
                 Writer.WriteStartElement("set_value");
                 Writer.WriteAttributeString("name", GetRuleFullText(context.leftHand));
                 Writer.WriteAttributeString("operation", "subtract");
                 Writer.WriteEndElement();
             }
 
-            public override void EnterAdditionAssign(BabyScriptParser.AdditionAssignContext context) {
+            public override void EnterAdditionAssign(BabyScriptParser.AdditionAssignContext context)
+            {
+                if (Error) return;
+
                 Writer.WriteStartElement("set_value");
                 Writer.WriteAttributeString("name", GetRuleFullText(context.leftHand));
                 Writer.WriteAttributeString("exact", GetRuleFullText(context.rightHand));
@@ -128,12 +187,34 @@ namespace XBabyScript.Compile
                 Writer.WriteEndElement();
             }
 
-            public override void EnterSubtractionAssign(BabyScriptParser.SubtractionAssignContext context) {
+            public override void EnterSubtractionAssign(BabyScriptParser.SubtractionAssignContext context)
+            {
+                if (Error) return;
+
                 Writer.WriteStartElement("set_value");
                 Writer.WriteAttributeString("name", GetRuleFullText(context.leftHand));
                 Writer.WriteAttributeString("exact", GetRuleFullText(context.rightHand));
                 Writer.WriteAttributeString("operation", "subtract");
                 Writer.WriteEndElement();
+            }
+
+            public override void EnterText(BabyScriptParser.TextContext context)
+            {
+                if (Error) return;
+
+                try
+                {
+                    Writer.WriteString(ParseDoubleQuoteString(context.textValue.Text));
+                }
+                catch (ArgumentException e)
+                {
+                    Errors.Add(new SemanticError(
+                        _properties.FileName,
+                        context.Start,
+                        e.Message
+                    ));
+                    Error = true;
+                }
             }
 
             public override void EnterAttribute(BabyScriptParser.AttributeContext context)
@@ -148,7 +229,7 @@ namespace XBabyScript.Compile
                             context.Start,
                             $"No implied attribute names available for {CurrentElement.eleName.GetText()}"
                         ));
-                        
+
                         Error = true;
                     }
                     else if (AvailableNames.Count == 0)
@@ -169,11 +250,26 @@ namespace XBabyScript.Compile
 
                 if (Error) return;
 
-                string realValue;
-                if (context.value.exprLiteral != null) {
-                    var literalText = context.value.exprLiteral.Text;
-                    realValue = literalText.Substring(1, literalText.Length - 2);
-                } else {
+                string realValue = null;
+                if (context.value.exprLiteral != null)
+                {
+                    try
+                    {
+                        var literalText = context.value.exprLiteral.Text;
+                        realValue = ParseDoubleQuoteString(literalText);
+                    }
+                    catch (ArgumentException e)
+                    {
+                        Errors.Add(new SemanticError(
+                            _properties.FileName,
+                            context.Start,
+                            e.Message
+                        ));
+                        Error = true;
+                    }
+                }
+                else
+                {
                     realValue = GetRuleFullText(context.value.exprValue);
                 }
 

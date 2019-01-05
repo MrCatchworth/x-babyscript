@@ -197,6 +197,18 @@ public interface IBabyScriptParserListener : IParseTreeListener {
 	/// <param name="context">The parse tree.</param>
 	void ExitSubtractionAssign([NotNull] BabyScriptParser.SubtractionAssignContext context);
 	/// <summary>
+	/// Enter a parse tree produced by the <c>Text</c>
+	/// labeled alternative in <see cref="BabyScriptParser.node"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterText([NotNull] BabyScriptParser.TextContext context);
+	/// <summary>
+	/// Exit a parse tree produced by the <c>Text</c>
+	/// labeled alternative in <see cref="BabyScriptParser.node"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitText([NotNull] BabyScriptParser.TextContext context);
+	/// <summary>
 	/// Enter a parse tree produced by the <c>BlockComment</c>
 	/// labeled alternative in <see cref="BabyScriptParser.node"/>.
 	/// </summary>

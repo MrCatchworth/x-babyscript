@@ -132,6 +132,13 @@ public interface IBabyScriptParserVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitSubtractionAssign([NotNull] BabyScriptParser.SubtractionAssignContext context);
 	/// <summary>
+	/// Visit a parse tree produced by the <c>Text</c>
+	/// labeled alternative in <see cref="BabyScriptParser.node"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitText([NotNull] BabyScriptParser.TextContext context);
+	/// <summary>
 	/// Visit a parse tree produced by the <c>BlockComment</c>
 	/// labeled alternative in <see cref="BabyScriptParser.node"/>.
 	/// </summary>
