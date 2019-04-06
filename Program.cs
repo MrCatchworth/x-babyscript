@@ -82,7 +82,7 @@ namespace XBabyScript
             if (numInputPaths != 1)
             {
                 Console.Error.WriteLine($"Expected 1 directory to watch; got {numInputPaths}");
-                Environment.ExitCode = 1;
+                Environment.ExitCode = (int)ExitCode.InvalidArguments;
                 return;
             }
 
@@ -91,7 +91,7 @@ namespace XBabyScript
             if (!Directory.Exists(watchPath))
             {
                 Console.Error.WriteLine($"{watchPath} does not point to a valid directory to watch");
-                Environment.ExitCode = 1;
+                Environment.ExitCode = (int)ExitCode.InvalidArguments;
                 return;
             }
 
@@ -163,14 +163,14 @@ namespace XBabyScript
 
             if (programOptions == null)
             {
-                Environment.ExitCode = 1;
+                Environment.ExitCode = (int)ExitCode.InvalidArguments;
                 return;
             }
 
             if (numVerbsSpecified != 1)
             {
                 Console.Error.WriteLine("Incorrect number of program modes specified");
-                Environment.ExitCode = 1;
+                Environment.ExitCode = (int)ExitCode.InvalidArguments;
                 return;
             }
 
@@ -189,7 +189,7 @@ namespace XBabyScript
                 if (!Directory.Exists(programOptions.OutputPath))
                 {
                     Console.Error.WriteLine($"Output path {programOptions.OutputPath} must refer to a valid directory");
-                    Environment.ExitCode = 1;
+                    Environment.ExitCode = (int)ExitCode.InvalidArguments;
                     return;
                 }
             }
@@ -272,7 +272,7 @@ namespace XBabyScript
                 }
             }
 
-            Environment.ExitCode = allFilesSuccessful ? 0 : 4;
+            Environment.ExitCode = allFilesSuccessful ? (int)ExitCode.Ok : (int)ExitCode.CompileError;
         }
     }
 }
