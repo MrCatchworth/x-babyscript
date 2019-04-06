@@ -7,7 +7,7 @@
             "type": "process",
             "args": [
                 "build",
-                "${workspaceFolder}/XRebirthBabyScript.Core.csproj"
+                "${workspaceFolder}/XBabyScript.csproj"
             ],
             "problemMatcher": "$msCompile"
         },
