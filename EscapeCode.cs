@@ -6,7 +6,7 @@ using System.Text.RegularExpressions;
 
 namespace XBabyScript
 {
-    public class EscapeCode
+    internal class EscapeCode
     {
         private static readonly Regex EscapeCodeRegex = new Regex(@"\\(.)");
 
