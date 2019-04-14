@@ -68,8 +68,14 @@ namespace XBabyScript
             { "set_job_active",             new[]{"job", "activate"} },
             { "set_object_active",          new[]{"object", "activate"} },
             { "set_known",                  new[]{"object", "known"} },
-            { "signal_objects",             new[]{"object", "param", "param2", "param3"} }
+            { "set_command",                new[]{"command"} },
+            { "set_command_action",         new[]{"commandaction"} },
+            { "run_script",                 new[]{"name"} },
+            { "shuffle_list",               new[]{"list"} },
+            { "signal_objects",             new[]{"object", "param", "param2", "param3"} },
 
+            //Event stuff
+            { "event_object_signalled",     new[]{"object", "param"} }
         };
 
         public readonly Dictionary<string, string> ShortElementNames = new Dictionary<string, string>
