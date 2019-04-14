@@ -185,9 +185,9 @@ namespace XBabyScript.Decompile
                     else if (Reader.NodeType == XmlNodeType.Whitespace)
                     {
                         var numNewlines = Reader.Value.Count(c => c == '\n');
-                        for (int i = 0; i < numNewlines - 1; i++)
+                        if (numNewlines > 1)
                         {
-                            Writer.WriteLine();
+                            Writer.WriteEmptyLines(numNewlines - 1);
                         }
                     }
                     else if (Reader.NodeType == XmlNodeType.Text)

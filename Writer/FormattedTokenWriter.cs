@@ -60,7 +60,7 @@ namespace XBabyScript.Writer
                 throw new ArgumentException("Token must not be null or empty string");
             }
 
-            if (newLine)
+            if (newLine && lineIsDirty)
             {
                 WriteLine();
             }
@@ -94,6 +94,24 @@ namespace XBabyScript.Writer
         public void Flush()
         {
             writer.Flush();
+        }
+
+        public void WriteEmptyLines(int amount)
+        {
+            if (amount <= 0)
+            {
+                throw new ArgumentException($"Cannot write <= 0 empty lines; received {amount}");
+            }
+
+            if (lineIsDirty)
+            {
+                WriteLine();
+            }
+
+            for (var i = 0; i < amount; i++)
+            {
+                WriteLine();
+            }
         }
     }
 }

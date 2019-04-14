@@ -355,8 +355,7 @@ namespace XBabyScript.Writer
             }
             else
             {
-                WriteLine();
-                WriteSlashComment(value);
+                WriteSlashComment(value, true);
             }
         }
 
@@ -382,10 +381,11 @@ namespace XBabyScript.Writer
 
         /// <summary>
         /// Write a slash comment. The comment text must not contain a line break.
-        /// The comment is written on the same line; to write a slash comment on a new line, call <see cref="WriteLine" /> beforehand.
+        /// A line break is always written after the comment.
         /// </summary>
         /// <param name="value">Comment text to write.</param>
-        public void WriteSlashComment(string value)
+        /// <param name="newLine">Whether or not the comment should go on a new line. Defaults to false.</param>
+        public void WriteSlashComment(string value, bool newLine = false)
         {
             AssertSaneState();
             AssertValidState(
@@ -402,7 +402,7 @@ namespace XBabyScript.Writer
             {
                 writer.WriteToken(" ", false);
             }
-            writer.WriteToken("//" + value, false);
+            writer.WriteToken("//" + value, newLine);
             writer.WriteLine();
         }
 
@@ -425,6 +425,11 @@ namespace XBabyScript.Writer
         public void WriteLine()
         {
             writer.WriteLine();
+        }
+
+        public void WriteEmptyLines(int amount)
+        {
+            writer.WriteEmptyLines(amount);
         }
     }
 }
