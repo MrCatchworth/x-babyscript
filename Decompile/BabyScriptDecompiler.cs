@@ -8,6 +8,7 @@ using Antlr4.Runtime.Misc;
 using System.IO;
 using XBabyScript.Tree;
 using XBabyScript.Compile;
+using XBabyScript.Writer;
 
 namespace XBabyScript.Decompile
 {
@@ -16,22 +17,20 @@ namespace XBabyScript.Decompile
         private static readonly Regex SnakeCaseRegex = new Regex("_([a-z])");
         //to break up multiline XML comments
         private static readonly Regex NewlineRegex = new Regex("\r\n|\r|\n");
-        private int indentLevel;
         private string curElementComment;
-        public TextWriter Writer { get; private set; }
+        public BabyScriptWriter Writer { get; private set; }
         public XmlReader Reader { get; private set; }
         private ConversionProperties _properties;
 
         public BabyScriptDecompiler()
         {
-            indentLevel = 0;
             curElementComment = null;
         }
 
         public bool Convert(ConversionProperties properties)
         {
             _properties = properties;
-            Writer = new StreamWriter(_properties.OutputStream);
+            Writer = new BabyScriptWriter(_properties.OutputStream);
             Reader = XmlReader.Create(_properties.InputStream);
 
             var shortcuts = new List<ElementShortcut>();
@@ -45,10 +44,10 @@ namespace XBabyScript.Decompile
                     },
                 Apply = dc =>
                 {
-                    Writer.Write(Reader.GetAttribute("name"));
-                    Writer.Write(" = ");
-                    Writer.Write(Reader.GetAttribute("exact"));
-                    Writer.Write(";");
+                    Writer.WriteAssign(
+                        Reader.GetAttribute("name"),
+                        Reader.GetAttribute("exact")
+                    );
                 }
             });
 
@@ -62,9 +61,7 @@ namespace XBabyScript.Decompile
                     },
                 Apply = dc =>
                 {
-                    Writer.Write(Reader.GetAttribute("name"));
-                    Writer.Write(" ++");
-                    Writer.Write(";");
+                    Writer.WriteIncrement(Reader.GetAttribute("name"));
                 }
             });
 
@@ -78,9 +75,7 @@ namespace XBabyScript.Decompile
                     },
                 Apply = dc =>
                 {
-                    Writer.Write(Reader.GetAttribute("name"));
-                    Writer.Write(" --");
-                    Writer.Write(";");
+                    Writer.WriteDecrement(Reader.GetAttribute("name"));
                 }
             });
 
@@ -95,10 +90,11 @@ namespace XBabyScript.Decompile
                     },
                 Apply = dc =>
                 {
-                    Writer.Write(Reader.GetAttribute("name"));
-                    Writer.Write(" += ");
-                    Writer.Write(Reader.GetAttribute("exact"));
-                    Writer.Write(";");
+                    Writer.WriteAssign(
+                        Reader.GetAttribute("name"),
+                        Reader.GetAttribute("exact"),
+                        BabyAssignType.Add
+                    );
                 }
             });
 
@@ -113,10 +109,11 @@ namespace XBabyScript.Decompile
                     },
                 Apply = dc =>
                 {
-                    Writer.Write(Reader.GetAttribute("name"));
-                    Writer.Write(" -= ");
-                    Writer.Write(Reader.GetAttribute("exact"));
-                    Writer.Write(";");
+                    Writer.WriteAssign(
+                        Reader.GetAttribute("name"),
+                        Reader.GetAttribute("exact"),
+                        BabyAssignType.Subtract
+                    );
                 }
             });
 
@@ -128,7 +125,6 @@ namespace XBabyScript.Decompile
                     {
 
                         string shortName = properties.GetShortElementName(Reader.Name);
-                        WriteIndent();
 
                         //write a shorthand assign statement if possible
                         var shortcutUsed = false;
@@ -153,50 +149,38 @@ namespace XBabyScript.Decompile
                                     return match.Groups[1].Captures[0].Value.ToUpper();
                                 });
                             }
-                            Writer.Write(trueName);
 
+                            Writer.WriteElementStart(trueName);
                             if (Reader.HasAttributes)
                             {
-                                int attrCount = Reader.AttributeCount;
-                                Writer.Write("(");
                                 WriteAttributes();
-                                Writer.Write(")");
                             }
 
                             if (Reader.IsEmptyElement)
                             {
-                                Writer.Write(";");
+                                Writer.WriteElementEnd();
                             }
+                        }
+
+                        if (!Reader.IsEmptyElement)
+                        {
+                            Writer.WriteElementChildrenStart();
                         }
 
                         //either way write any comment as necessary
                         if (curElementComment != null)
                         {
-                            Writer.Write(' ');
-                            WriteComment(curElementComment);
+                            Writer.WriteSlashComment(curElementComment);
                             curElementComment = null;
-                        }
-
-                        Writer.WriteLine();
-
-                        if (!shortcutUsed && !Reader.IsEmptyElement)
-                        {
-                            WriteIndent();
-                            Writer.WriteLine("{");
-                            indentLevel++;
                         }
                     }
                     else if (Reader.NodeType == XmlNodeType.EndElement)
                     {
-                        indentLevel--;
-                        WriteIndent();
-                        Writer.WriteLine("}");
+                        Writer.WriteElementEnd();
                     }
                     else if (Reader.NodeType == XmlNodeType.Comment)
                     {
-                        WriteIndent();
-                        WriteComment(Reader.Value);
-                        Writer.WriteLine();
+                        Writer.WriteComment(Reader.Value);
                     }
                     else if (Reader.NodeType == XmlNodeType.Whitespace)
                     {
@@ -208,11 +192,7 @@ namespace XBabyScript.Decompile
                     }
                     else if (Reader.NodeType == XmlNodeType.Text)
                     {
-                        var textValue = EscapeCode.Escape(Reader.Value.Trim(), '"');
-
-                        WriteIndent();
-                        Writer.Write("\"" + textValue + "\";");
-                        Writer.WriteLine();
+                        Writer.WriteTextNode(Reader.Value.Trim());
                     }
                 }
             }
@@ -236,9 +216,9 @@ namespace XBabyScript.Decompile
             // string[] impliedNames = attrConfig.GetAnonAttributes(reader.Name);
             _properties.ImpliedAttributeNames.TryGetValue(Reader.Name, out var impliedNames);
 
-            List<BabyAttribute> allAttributes = new List<BabyAttribute>();
-            List<BabyAttribute> namedAttributes = new List<BabyAttribute>();
-            List<BabyAttribute> anonAttributes = new List<BabyAttribute>();
+            var allAttributes = new List<BabyAttribute>();
+            var namedAttributes = new List<BabyAttribute>();
+            var anonAttributes = new List<BabyAttribute>();
 
             //just get a list of all the attributes, in our own data structure
             while (Reader.MoveToNextAttribute())
@@ -287,57 +267,28 @@ namespace XBabyScript.Decompile
             //things to write is all the nameless ones followed by the named ones
             IEnumerable<BabyAttribute> thingsToWrite = anonAttributes.Concat(namedAttributes);
 
-            int attrNumber = 0;
             foreach (BabyAttribute attribute in thingsToWrite)
             {
-                if (!attribute.IsAnonymous)
-                {
-                    Writer.Write(attribute.Name);
-                    Writer.Write(":");
-                }
-
                 BabyScriptLexer lexer = new BabyScriptLexer(new AntlrInputStream(attribute.Value));
                 CommonTokenStream tokens = new CommonTokenStream(lexer);
                 BabyScriptParser parser = new BabyScriptParser(tokens);
                 parser.RemoveErrorListener(ConsoleErrorListener<IToken>.Instance);
                 parser.exprEof();
-                if (parser.NumberOfSyntaxErrors > 0)
+
+                var isValidExpression = parser.NumberOfSyntaxErrors == 0;
+                if (!isValidExpression)
                 {
                     Console.Error.WriteLine("Line {0}: \"{1}\" isn't a valid expression and will be wrapped in doublequotes", ((IXmlLineInfo)Reader).LineNumber, attribute.Value);
-                    Writer.Write("\"" + attribute.Value + "\"");
-                }
-                else
-                {
-                    Writer.Write(attribute.Value);
                 }
 
-                if (allAttributes.Count > 1 && attrNumber < allAttributes.Count - 1)
-                {
-                    Writer.Write(", ");
-                }
-                attrNumber++;
+                Writer.WriteAttribute(
+                    isValidExpression ? attribute.Name : null,
+                    attribute.Value,
+                    !isValidExpression
+                );
             }
 
             Reader.MoveToElement();
-        }
-
-        private void WriteIndent()
-        {
-            Writer.Write(new string(' ', _properties.Options.Indent * indentLevel));
-        }
-
-        private void WriteComment(string comment)
-        {
-            if (comment.IndexOf('\n') != -1)
-            {
-                Writer.Write("/*");
-                Writer.Write(comment);
-                Writer.Write("*/");
-            }
-            else
-            {
-                Writer.Write("//" + NewlineRegex.Replace(comment, " "));
-            }
         }
     }
 }

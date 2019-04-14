@@ -16,7 +16,7 @@ namespace XBabyScript.Compile
     public class BabyScriptCompiler : IBabyScriptConverter
     {
         private static readonly Regex CamelCaseRegex = new Regex("(?<=[a-z])([A-Z])");
-        public static readonly Regex IdRegex = new Regex("^\\$?[A-Za-z][A-Za-z0-9_]*$");
+        public static readonly Regex IdRegex = new Regex(@"^\$?[A-Za-z][A-Za-z0-9_]*$");
         private static string GetRuleFullText(ParserRuleContext context)
         {
             var stream = context.Start.InputStream;
