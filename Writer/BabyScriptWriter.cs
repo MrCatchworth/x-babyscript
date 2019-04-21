@@ -309,6 +309,19 @@ namespace XBabyScript.Writer
             writer.WriteToken(" --;", false);
         }
 
+        public void WriteDelete(string value)
+        {
+            AssertSaneState();
+            if (IsElementHeaderInProgress())
+            {
+                WriteElementEnd();
+            }
+
+            writer.WriteToken("delete ", true);
+            writer.WriteToken(value, false);
+            writer.WriteToken(";", false);
+        }
+
         private string CreateDoubleQuoteString(string value)
         {
             var textValue = EscapeCode.Escape(value.Trim(), '"');
@@ -330,7 +343,7 @@ namespace XBabyScript.Writer
             writer.Flush();
         }
 
-        public bool IsElementHeaderInProgress()
+        private bool IsElementHeaderInProgress()
         {
             return (
                 state == WriterStatus.AfterElementName ||

@@ -4,8 +4,12 @@ channels {
     WHITESPACE
 }
 
-OPPAREN : '(' ;
-CLPAREN : ')' ;
+@members {
+    private int parenDepth = 0;
+}
+
+OPPAREN : '(' { parenDepth++; };
+CLPAREN : ')' { parenDepth--; };
 
 OPBRACKET : '[' ;
 CLBRACKET : ']' ;
@@ -82,6 +86,7 @@ THEN :          'then';
 ELSE :          'else';
 
 TABLE :         'table';
+DELETE :        'delete';
 
 ID : '$'?[A-Za-z] [A-Za-z0-9_]* ;
 

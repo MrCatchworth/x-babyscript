@@ -117,6 +117,21 @@ namespace XBabyScript.Decompile
                 }
             });
 
+            // Delete
+            shortcuts.Add(new ElementShortcut()
+            {
+                HeaderRule = new RemoveValueHeaderRule(),
+                AttributeRules = new List<IAttributeRule> {
+                        new NameAttributeRule("name")
+                    },
+                Apply = dc =>
+                {
+                    Writer.WriteDelete(
+                        Reader.GetAttribute("name")
+                    );
+                }
+            });
+
             try
             {
                 while (Reader.Read())

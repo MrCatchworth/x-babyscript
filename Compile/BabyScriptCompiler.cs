@@ -161,6 +161,15 @@ namespace XBabyScript.Compile
                 Writer.WriteEndElement();
             }
 
+            public override void EnterDelete(BabyScriptParser.DeleteContext context)
+            {
+                if (Error) return;
+
+                Writer.WriteStartElement("remove_value");
+                Writer.WriteAttributeString("name", GetRuleFullText(context.leftHand));
+                Writer.WriteEndElement();
+            }
+
             public override void EnterText(BabyScriptParser.TextContext context)
             {
                 if (Error) return;
@@ -267,7 +276,7 @@ namespace XBabyScript.Compile
             var parser = new BabyScriptParser(tokenStream);
             parser.AddErrorListener(new MyErrorListener(properties));
 
-            BabyScriptParser.DocumentContext doc = parser.document();
+            BabyScriptParser.DocumentContext documentContext = parser.document();
 
             if (parser.NumberOfSyntaxErrors > 0)
             {
@@ -276,7 +285,7 @@ namespace XBabyScript.Compile
             }
 
             XmlWritingListener listener = new XmlWritingListener(properties, tokenStream);
-            new ParseTreeWalker().Walk(listener, doc);
+            new ParseTreeWalker().Walk(listener, documentContext);
             listener.Flush();
 
             if (listener.Error)

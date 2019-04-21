@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-// Generated from c:\Users\Johnny\Documents\programming\XRebirthBabyScript.Core\BabyScriptParser.g4 by ANTLR 4.7.1
+// Generated from c:\Users\Johnny\Documents\programming\XBabyScript\BabyScriptParser.g4 by ANTLR 4.7.1
 
 // Unreachable code detected
 #pragma warning disable 0162
@@ -230,6 +230,20 @@ public partial class BabyScriptParserBaseListener : IBabyScriptParserListener {
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitSubtractionAssign([NotNull] BabyScriptParser.SubtractionAssignContext context) { }
+	/// <summary>
+	/// Enter a parse tree produced by the <c>Delete</c>
+	/// labeled alternative in <see cref="BabyScriptParser.node"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterDelete([NotNull] BabyScriptParser.DeleteContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by the <c>Delete</c>
+	/// labeled alternative in <see cref="BabyScriptParser.node"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitDelete([NotNull] BabyScriptParser.DeleteContext context) { }
 	/// <summary>
 	/// Enter a parse tree produced by the <c>Text</c>
 	/// labeled alternative in <see cref="BabyScriptParser.node"/>.
