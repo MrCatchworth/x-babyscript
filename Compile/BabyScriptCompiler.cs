@@ -15,6 +15,7 @@ namespace XBabyScript.Compile
 {
     public class BabyScriptCompiler : IBabyScriptConverter
     {
+        private static readonly Regex ScaryWhitespaceRegex = new Regex(@"[ \t]*(\r\n|\r|\n)[ \t]*");
         private static readonly Regex CamelCaseRegex = new Regex("(?<=[a-z])([A-Z])");
         public static readonly Regex IdRegex = new Regex(@"^\$?[A-Za-z][A-Za-z0-9_]*$");
         private static string GetRuleFullText(ParserRuleContext context)
@@ -31,9 +32,15 @@ namespace XBabyScript.Compile
 
         public class XmlWritingListener : BabyScriptParserBaseListener
         {
+            private string FixScaryWhitespace(string input)
+            {
+                return ScaryWhitespaceRegex.Replace(input, " ");
+            }
+
             private readonly XmlWriter Writer;
             private BabyScriptParser.ElementContext CurrentElement;
             public bool Error { get; private set; }
+            private int LinebreakTrackingStart;
 
             private readonly ConversionProperties _properties;
             private readonly CommonTokenStream _tokenStream;
@@ -54,6 +61,7 @@ namespace XBabyScript.Compile
                 });
                 Error = false;
                 Errors = new List<SemanticError>();
+                LinebreakTrackingStart = 0;
             }
 
             private void SetCurrentElement(BabyScriptParser.ElementContext ctx, string realName)
@@ -70,6 +78,11 @@ namespace XBabyScript.Compile
                 }
 
                 CurrentElement = ctx;
+            }
+
+            public override void EnterElementChildrenBlock(BabyScriptParser.ElementChildrenBlockContext context)
+            {
+                LinebreakTrackingStart = context.blockBegin.TokenIndex;
             }
 
             public override void EnterSlashComment(BabyScriptParser.SlashCommentContext context)
@@ -114,8 +127,8 @@ namespace XBabyScript.Compile
                 if (Error) return;
 
                 Writer.WriteStartElement("set_value");
-                Writer.WriteAttributeString("name", GetRuleFullText(context.leftHand));
-                Writer.WriteAttributeString("exact", GetRuleFullText(context.rightHand));
+                Writer.WriteAttributeString("name", FixScaryWhitespace(GetRuleFullText(context.leftHand)));
+                Writer.WriteAttributeString("exact", FixScaryWhitespace(GetRuleFullText(context.rightHand)));
                 Writer.WriteEndElement();
             }
 
@@ -124,7 +137,7 @@ namespace XBabyScript.Compile
                 if (Error) return;
 
                 Writer.WriteStartElement("set_value");
-                Writer.WriteAttributeString("name", GetRuleFullText(context.leftHand));
+                Writer.WriteAttributeString("name", FixScaryWhitespace(GetRuleFullText(context.leftHand)));
                 Writer.WriteAttributeString("operation", "add");
                 Writer.WriteEndElement();
             }
@@ -134,7 +147,7 @@ namespace XBabyScript.Compile
                 if (Error) return;
 
                 Writer.WriteStartElement("set_value");
-                Writer.WriteAttributeString("name", GetRuleFullText(context.leftHand));
+                Writer.WriteAttributeString("name", FixScaryWhitespace(GetRuleFullText(context.leftHand)));
                 Writer.WriteAttributeString("operation", "subtract");
                 Writer.WriteEndElement();
             }
@@ -144,8 +157,8 @@ namespace XBabyScript.Compile
                 if (Error) return;
 
                 Writer.WriteStartElement("set_value");
-                Writer.WriteAttributeString("name", GetRuleFullText(context.leftHand));
-                Writer.WriteAttributeString("exact", GetRuleFullText(context.rightHand));
+                Writer.WriteAttributeString("name", FixScaryWhitespace(GetRuleFullText(context.leftHand)));
+                Writer.WriteAttributeString("exact", FixScaryWhitespace(GetRuleFullText(context.rightHand)));
                 Writer.WriteAttributeString("operation", "add");
                 Writer.WriteEndElement();
             }
@@ -155,8 +168,8 @@ namespace XBabyScript.Compile
                 if (Error) return;
 
                 Writer.WriteStartElement("set_value");
-                Writer.WriteAttributeString("name", GetRuleFullText(context.leftHand));
-                Writer.WriteAttributeString("exact", GetRuleFullText(context.rightHand));
+                Writer.WriteAttributeString("name", FixScaryWhitespace(GetRuleFullText(context.leftHand)));
+                Writer.WriteAttributeString("exact", FixScaryWhitespace(GetRuleFullText(context.rightHand)));
                 Writer.WriteAttributeString("operation", "subtract");
                 Writer.WriteEndElement();
             }
@@ -166,7 +179,7 @@ namespace XBabyScript.Compile
                 if (Error) return;
 
                 Writer.WriteStartElement("remove_value");
-                Writer.WriteAttributeString("name", GetRuleFullText(context.leftHand));
+                Writer.WriteAttributeString("name", FixScaryWhitespace(GetRuleFullText(context.leftHand)));
                 Writer.WriteEndElement();
             }
 
@@ -245,7 +258,7 @@ namespace XBabyScript.Compile
                     realValue = GetRuleFullText(context.value.exprValue);
                 }
 
-                Writer.WriteAttributeString(name, realValue);
+                Writer.WriteAttributeString(name, FixScaryWhitespace(realValue));
             }
 
             public void Flush()

@@ -178,11 +178,19 @@ public interface IBabyScriptParserVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitAttributeValue([NotNull] BabyScriptParser.AttributeValueContext context);
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="BabyScriptParser.elementChildren"/>.
+	/// Visit a parse tree produced by the <c>ElementEmptyChildren</c>
+	/// labeled alternative in <see cref="BabyScriptParser.elementChildren"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	Result VisitElementChildren([NotNull] BabyScriptParser.ElementChildrenContext context);
+	Result VisitElementEmptyChildren([NotNull] BabyScriptParser.ElementEmptyChildrenContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>ElementChildrenBlock</c>
+	/// labeled alternative in <see cref="BabyScriptParser.elementChildren"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitElementChildrenBlock([NotNull] BabyScriptParser.ElementChildrenBlockContext context);
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="BabyScriptParser.lookupChain"/>.
 	/// </summary>

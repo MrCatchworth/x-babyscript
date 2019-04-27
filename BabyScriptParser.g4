@@ -103,8 +103,8 @@ attributeValue
     ;
 
 elementChildren
-    : SEMICOLON inlineComment=SLASH_COMMENT?
-    | inlineComment=SLASH_COMMENT? OPBRACE rawList+=node* CLBRACE
+    : SEMICOLON inlineComment=SLASH_COMMENT? # ElementEmptyChildren
+    | inlineComment=SLASH_COMMENT? blockBegin=OPBRACE rawList+=node* blockEnd=CLBRACE # ElementChildrenBlock
     ;
 
 lookupChain

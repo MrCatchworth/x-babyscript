@@ -1,18 +1,20 @@
 Comments:
   ☐ If a line is one element header followed by one slash-comment, compile that comment into a 'comment' attribute
-  ☐ If a comment is somewhere it could be compiled into an XML comment, try to do so
+  ✔ If a comment is somewhere it could be compiled into an XML comment, try to do so @done(19-01-05 20:42)
 
 Command Line:
   ☐ Think of some more options...
   ✔ Add an option for indent size @done(18-11-01 18:51)
 
 Compilation/Syntax:
-  ☐ Support camel <-> snake transformation
+  ✔ Support camel <-> snake transformation @done(19-01-05 20:41)
+  ☐ Add explicit whitespace node, and preserve line breaks better when compiling
 
 Program Features:
-  ☐ Add watcher mechanics
-  ☐ Add 'source folder' mechanics
+  ✔ Add watcher mechanics @done(19-01-05 20:41)
+  ✘ Add 'source folder' mechanics @cancelled(19-04-06 16:33)
+  ☐ Support config via json file, a bit like tsconfig etc
 
 Refactoring:
-  ☐ Decompiler
-  ☐ Main method
+  ✔ Decompiler @done(19-01-05 20:41)
+  ✔ Main method @done(19-04-14 18:26)

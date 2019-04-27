@@ -1634,35 +1634,63 @@ public partial class BabyScriptParser : Parser {
 	}
 
 	public partial class ElementChildrenContext : ParserRuleContext {
+		public ElementChildrenContext(ParserRuleContext parent, int invokingState)
+			: base(parent, invokingState)
+		{
+		}
+		public override int RuleIndex { get { return RULE_elementChildren; } }
+	 
+		public ElementChildrenContext() { }
+		public virtual void CopyFrom(ElementChildrenContext context) {
+			base.CopyFrom(context);
+		}
+	}
+	public partial class ElementChildrenBlockContext : ElementChildrenContext {
 		public IToken inlineComment;
+		public IToken blockBegin;
 		public NodeContext _node;
 		public IList<NodeContext> _rawList = new List<NodeContext>();
-		public ITerminalNode SEMICOLON() { return GetToken(BabyScriptParser.SEMICOLON, 0); }
-		public ITerminalNode SLASH_COMMENT() { return GetToken(BabyScriptParser.SLASH_COMMENT, 0); }
+		public IToken blockEnd;
 		public ITerminalNode OPBRACE() { return GetToken(BabyScriptParser.OPBRACE, 0); }
 		public ITerminalNode CLBRACE() { return GetToken(BabyScriptParser.CLBRACE, 0); }
+		public ITerminalNode SLASH_COMMENT() { return GetToken(BabyScriptParser.SLASH_COMMENT, 0); }
 		public NodeContext[] node() {
 			return GetRuleContexts<NodeContext>();
 		}
 		public NodeContext node(int i) {
 			return GetRuleContext<NodeContext>(i);
 		}
-		public ElementChildrenContext(ParserRuleContext parent, int invokingState)
-			: base(parent, invokingState)
-		{
-		}
-		public override int RuleIndex { get { return RULE_elementChildren; } }
+		public ElementChildrenBlockContext(ElementChildrenContext context) { CopyFrom(context); }
 		public override void EnterRule(IParseTreeListener listener) {
 			IBabyScriptParserListener typedListener = listener as IBabyScriptParserListener;
-			if (typedListener != null) typedListener.EnterElementChildren(this);
+			if (typedListener != null) typedListener.EnterElementChildrenBlock(this);
 		}
 		public override void ExitRule(IParseTreeListener listener) {
 			IBabyScriptParserListener typedListener = listener as IBabyScriptParserListener;
-			if (typedListener != null) typedListener.ExitElementChildren(this);
+			if (typedListener != null) typedListener.ExitElementChildrenBlock(this);
 		}
 		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
 			IBabyScriptParserVisitor<TResult> typedVisitor = visitor as IBabyScriptParserVisitor<TResult>;
-			if (typedVisitor != null) return typedVisitor.VisitElementChildren(this);
+			if (typedVisitor != null) return typedVisitor.VisitElementChildrenBlock(this);
+			else return visitor.VisitChildren(this);
+		}
+	}
+	public partial class ElementEmptyChildrenContext : ElementChildrenContext {
+		public IToken inlineComment;
+		public ITerminalNode SEMICOLON() { return GetToken(BabyScriptParser.SEMICOLON, 0); }
+		public ITerminalNode SLASH_COMMENT() { return GetToken(BabyScriptParser.SLASH_COMMENT, 0); }
+		public ElementEmptyChildrenContext(ElementChildrenContext context) { CopyFrom(context); }
+		public override void EnterRule(IParseTreeListener listener) {
+			IBabyScriptParserListener typedListener = listener as IBabyScriptParserListener;
+			if (typedListener != null) typedListener.EnterElementEmptyChildren(this);
+		}
+		public override void ExitRule(IParseTreeListener listener) {
+			IBabyScriptParserListener typedListener = listener as IBabyScriptParserListener;
+			if (typedListener != null) typedListener.ExitElementEmptyChildren(this);
+		}
+		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
+			IBabyScriptParserVisitor<TResult> typedVisitor = visitor as IBabyScriptParserVisitor<TResult>;
+			if (typedVisitor != null) return typedVisitor.VisitElementEmptyChildren(this);
 			else return visitor.VisitChildren(this);
 		}
 	}
@@ -1678,6 +1706,7 @@ public partial class BabyScriptParser : Parser {
 			ErrorHandler.Sync(this);
 			switch (TokenStream.LA(1)) {
 			case SEMICOLON:
+				_localctx = new ElementEmptyChildrenContext(_localctx);
 				EnterOuterAlt(_localctx, 1);
 				{
 				State = 243; Match(SEMICOLON);
@@ -1686,7 +1715,7 @@ public partial class BabyScriptParser : Parser {
 				switch ( Interpreter.AdaptivePredict(TokenStream,21,Context) ) {
 				case 1:
 					{
-					State = 244; _localctx.inlineComment = Match(SLASH_COMMENT);
+					State = 244; ((ElementEmptyChildrenContext)_localctx).inlineComment = Match(SLASH_COMMENT);
 					}
 					break;
 				}
@@ -1694,6 +1723,7 @@ public partial class BabyScriptParser : Parser {
 				break;
 			case OPBRACE:
 			case SLASH_COMMENT:
+				_localctx = new ElementChildrenBlockContext(_localctx);
 				EnterOuterAlt(_localctx, 2);
 				{
 				State = 248;
@@ -1701,11 +1731,11 @@ public partial class BabyScriptParser : Parser {
 				_la = TokenStream.LA(1);
 				if (_la==SLASH_COMMENT) {
 					{
-					State = 247; _localctx.inlineComment = Match(SLASH_COMMENT);
+					State = 247; ((ElementChildrenBlockContext)_localctx).inlineComment = Match(SLASH_COMMENT);
 					}
 				}
 
-				State = 250; Match(OPBRACE);
+				State = 250; ((ElementChildrenBlockContext)_localctx).blockBegin = Match(OPBRACE);
 				State = 254;
 				ErrorHandler.Sync(this);
 				_alt = Interpreter.AdaptivePredict(TokenStream,23,Context);
@@ -1713,8 +1743,8 @@ public partial class BabyScriptParser : Parser {
 					if ( _alt==1 ) {
 						{
 						{
-						State = 251; _localctx._node = node();
-						_localctx._rawList.Add(_localctx._node);
+						State = 251; ((ElementChildrenBlockContext)_localctx)._node = node();
+						((ElementChildrenBlockContext)_localctx)._rawList.Add(((ElementChildrenBlockContext)_localctx)._node);
 						}
 						} 
 					}
@@ -1722,7 +1752,7 @@ public partial class BabyScriptParser : Parser {
 					ErrorHandler.Sync(this);
 					_alt = Interpreter.AdaptivePredict(TokenStream,23,Context);
 				}
-				State = 257; Match(CLBRACE);
+				State = 257; ((ElementChildrenBlockContext)_localctx).blockEnd = Match(CLBRACE);
 				}
 				break;
 			default:
