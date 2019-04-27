@@ -15,8 +15,6 @@ namespace XBabyScript.Decompile
     public class BabyScriptDecompiler : IBabyScriptConverter
     {
         private static readonly Regex SnakeCaseRegex = new Regex("_([a-z])");
-        //to break up multiline XML comments
-        private static readonly Regex NewlineRegex = new Regex("\r\n|\r|\n");
         private string curElementComment;
         public BabyScriptWriter Writer { get; private set; }
         public XmlReader Reader { get; private set; }
