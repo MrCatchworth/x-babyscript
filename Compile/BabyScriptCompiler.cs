@@ -37,7 +37,12 @@ namespace XBabyScript.Compile
                 return ScaryWhitespaceRegex.Replace(input, " ");
             }
 
-            private readonly XmlWriter Writer;
+            private readonly Stack<XmlNode> nodeStack;
+            private readonly XmlDocument document;
+            public XmlDocument Document => document;
+
+            private XmlNode currentXmlNode { get => nodeStack.Peek(); }
+
             private BabyScriptParser.ElementContext CurrentElement;
             public bool Error { get; private set; }
             private int LinebreakTrackingStart;
@@ -54,14 +59,13 @@ namespace XBabyScript.Compile
             {
                 _properties = properties;
                 _tokenStream = tokenStream;
-                Writer = XmlWriter.Create(_properties.OutputStream, new XmlWriterSettings
-                {
-                    Indent = true,
-                    IndentChars = new string(' ', _properties.Options.Indent)
-                });
                 Error = false;
                 Errors = new List<SemanticError>();
                 LinebreakTrackingStart = 0;
+                nodeStack = new Stack<XmlNode>(20);
+                
+                document = new XmlDocument();
+                nodeStack.Push(document);
             }
 
             private void SetCurrentElement(BabyScriptParser.ElementContext ctx, string realName)
@@ -88,13 +92,13 @@ namespace XBabyScript.Compile
             public override void EnterSlashComment(BabyScriptParser.SlashCommentContext context)
             {
                 var commentText = context.commentText.Text.Substring(2);
-                Writer.WriteComment(commentText);
+                currentXmlNode.AppendChild(document.CreateComment(commentText));
             }
 
             public override void EnterBlockComment(BabyScriptParser.BlockCommentContext context)
             {
                 var commentText = context.commentText.Text.Substring(2, context.commentText.Text.Length - 4);
-                Writer.WriteComment(commentText);
+                currentXmlNode.AppendChild(document.CreateComment(commentText));
             }
 
             public override void EnterElement(BabyScriptParser.ElementContext ctx)
@@ -112,75 +116,86 @@ namespace XBabyScript.Compile
 
                 if (Error) return;
 
-                Writer.WriteStartElement(realName);
                 SetCurrentElement(ctx, realName);
+                
+                Console.WriteLine($"Enter element with name: {realName}");
+                var newElement = document.CreateElement(realName);
+                currentXmlNode.AppendChild(newElement);
+                nodeStack.Push(newElement);
             }
 
             public override void ExitElement(BabyScriptParser.ElementContext ctx)
             {
                 if (Error) return;
-                Writer.WriteEndElement();
+                nodeStack.Pop();
             }
 
             public override void EnterAssign(BabyScriptParser.AssignContext context)
             {
                 if (Error) return;
 
-                Writer.WriteStartElement("set_value");
-                Writer.WriteAttributeString("name", FixScaryWhitespace(GetRuleFullText(context.leftHand)));
-                Writer.WriteAttributeString("exact", FixScaryWhitespace(GetRuleFullText(context.rightHand)));
-                Writer.WriteEndElement();
+                var assignNode = document.CreateElement("set_value");
+                assignNode.SetAttribute("name", FixScaryWhitespace(GetRuleFullText(context.leftHand)));
+                assignNode.SetAttribute("exact", FixScaryWhitespace(GetRuleFullText(context.rightHand)));
+
+                currentXmlNode.AppendChild(assignNode);
             }
 
             public override void EnterIncrement(BabyScriptParser.IncrementContext context)
             {
                 if (Error) return;
 
-                Writer.WriteStartElement("set_value");
-                Writer.WriteAttributeString("name", FixScaryWhitespace(GetRuleFullText(context.leftHand)));
-                Writer.WriteAttributeString("operation", "add");
-                Writer.WriteEndElement();
+                var incrementNode = document.CreateElement("set_value");
+                incrementNode.SetAttribute("name", FixScaryWhitespace(GetRuleFullText(context.leftHand)));
+                incrementNode.SetAttribute("operation", "add");
+
+                currentXmlNode.AppendChild(incrementNode);
             }
 
             public override void EnterDecrement(BabyScriptParser.DecrementContext context)
             {
                 if (Error) return;
 
-                Writer.WriteStartElement("set_value");
-                Writer.WriteAttributeString("name", FixScaryWhitespace(GetRuleFullText(context.leftHand)));
-                Writer.WriteAttributeString("operation", "subtract");
-                Writer.WriteEndElement();
+
+                var decrementNode = document.CreateElement("set_value");
+                decrementNode.SetAttribute("name", FixScaryWhitespace(GetRuleFullText(context.leftHand)));
+                decrementNode.SetAttribute("operation", "subtract");
+
+                currentXmlNode.AppendChild(decrementNode);
             }
 
             public override void EnterAdditionAssign(BabyScriptParser.AdditionAssignContext context)
             {
                 if (Error) return;
 
-                Writer.WriteStartElement("set_value");
-                Writer.WriteAttributeString("name", FixScaryWhitespace(GetRuleFullText(context.leftHand)));
-                Writer.WriteAttributeString("exact", FixScaryWhitespace(GetRuleFullText(context.rightHand)));
-                Writer.WriteAttributeString("operation", "add");
-                Writer.WriteEndElement();
+                var assignNode = document.CreateElement("set_value");
+                assignNode.SetAttribute("name", FixScaryWhitespace(GetRuleFullText(context.leftHand)));
+                assignNode.SetAttribute("exact", FixScaryWhitespace(GetRuleFullText(context.rightHand)));
+                assignNode.SetAttribute("operation", "add");
+
+                currentXmlNode.AppendChild(assignNode);
             }
 
             public override void EnterSubtractionAssign(BabyScriptParser.SubtractionAssignContext context)
             {
                 if (Error) return;
 
-                Writer.WriteStartElement("set_value");
-                Writer.WriteAttributeString("name", FixScaryWhitespace(GetRuleFullText(context.leftHand)));
-                Writer.WriteAttributeString("exact", FixScaryWhitespace(GetRuleFullText(context.rightHand)));
-                Writer.WriteAttributeString("operation", "subtract");
-                Writer.WriteEndElement();
+                var assignNode = document.CreateElement("set_value");
+                assignNode.SetAttribute("name", FixScaryWhitespace(GetRuleFullText(context.leftHand)));
+                assignNode.SetAttribute("exact", FixScaryWhitespace(GetRuleFullText(context.rightHand)));
+                assignNode.SetAttribute("operation", "subtract");
+
+                currentXmlNode.AppendChild(assignNode);
             }
 
             public override void EnterDelete(BabyScriptParser.DeleteContext context)
             {
                 if (Error) return;
 
-                Writer.WriteStartElement("remove_value");
-                Writer.WriteAttributeString("name", FixScaryWhitespace(GetRuleFullText(context.leftHand)));
-                Writer.WriteEndElement();
+                var removeNode = document.CreateElement("remove_value");
+                removeNode.SetAttribute("name", FixScaryWhitespace(GetRuleFullText(context.leftHand)));
+
+                currentXmlNode.AppendChild(removeNode);
             }
 
             public override void EnterText(BabyScriptParser.TextContext context)
@@ -189,7 +204,9 @@ namespace XBabyScript.Compile
 
                 try
                 {
-                    Writer.WriteString(ParseDoubleQuoteString(context.textValue.Text));
+                    var nodeText = ParseDoubleQuoteString(context.textValue.Text);
+
+                    currentXmlNode.AppendChild(document.CreateTextNode(nodeText));
                 }
                 catch (ArgumentException e)
                 {
@@ -258,12 +275,7 @@ namespace XBabyScript.Compile
                     realValue = GetRuleFullText(context.value.exprValue);
                 }
 
-                Writer.WriteAttributeString(name, FixScaryWhitespace(realValue));
-            }
-
-            public void Flush()
-            {
-                Writer.Flush();
+                (currentXmlNode as XmlElement).SetAttribute(name, FixScaryWhitespace(realValue));
             }
         }
 
@@ -299,7 +311,13 @@ namespace XBabyScript.Compile
 
             XmlWritingListener listener = new XmlWritingListener(properties, tokenStream);
             new ParseTreeWalker().Walk(listener, documentContext);
-            listener.Flush();
+
+            var xmlWriter = XmlWriter.Create(properties.OutputStream, new XmlWriterSettings
+            {
+                Indent = true,
+                IndentChars = new string(' ', properties.Options.Indent)
+            });
+            listener.Document.Save(xmlWriter);
 
             if (listener.Error)
             {
